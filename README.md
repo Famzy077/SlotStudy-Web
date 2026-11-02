@@ -30,5 +30,3 @@ By default, the client connects to `http://localhost:3000/api/v1`. Set `VITE_API
 - Notifications, profile editing and avatar upload, settings, subscription information, and help
 
 API requests use the response envelope returned by the NestJS `ResponseInterceptor`. Authentication state is stored in browser local storage through Zustand persistence.
-# SlotStudy-Web
-# SlotStudy-Web
