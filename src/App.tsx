@@ -174,7 +174,6 @@ function App() {
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding/academic-setup" element={<AcademicSetupPage />} />
       <Route element={<AppShell />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/courses" element={<WorkspacePage />} />
         <Route path="/courses/:id" element={<WorkspacePage />} />
