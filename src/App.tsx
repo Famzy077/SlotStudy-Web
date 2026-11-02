@@ -10,6 +10,7 @@ import { useAuth } from './lib/auth';
 import api, { getErrorMessage, unwrap } from './lib/api';
 import { DashboardPage, WorkspacePage } from './WorkspacePages';
 import BrandLogo from './BrandLogo';
+import LandingPage from './components/landing/LandingPage';
 
 const links = [
   { title: 'Overview', links: [{ name: 'Dashboard', to: '/dashboard', icon: House }, { name: 'My courses', to: '/courses', icon: BookOpen }] },
@@ -164,6 +165,7 @@ function getNotifications(value: unknown): Record<string, unknown>[] {
 
 function App() {
   return <><ThemeController /><Routes>
+    <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<LoginPage />} />
     <Route path="/register" element={<RegisterPage />} />
     <Route path="/verify-otp" element={<VerifyOtpPage />} />
