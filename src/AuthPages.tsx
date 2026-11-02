@@ -24,7 +24,7 @@ function AuthLayout({ children, tagline = 'A little progress, every day.' }: { c
   return (
     <main className="auth-page">
       <section className="auth-art">
-        <div className="auth-art-top"><BrandLogo /><span className="auth-version">STUDY SMARTER</span></div>
+        <div className="auth-art-top"><Link to="/" title="Back to home"><BrandLogo /></Link><span className="auth-version">STUDY SMARTER</span></div>
         <div className="auth-art-copy">
           <div className="auth-orbit"><Sparkles size={18} /><span>Your learning, in focus</span></div>
           <h1>Make room<br />for <em>what matters.</em></h1>
@@ -33,7 +33,16 @@ function AuthLayout({ children, tagline = 'A little progress, every day.' }: { c
         <div className="floating-note"><span className="note-icon">✳</span><div><b>Small steps add up</b><small>{tagline}</small></div><span className="note-check">✓</span></div>
         <div className="art-decoration art-decoration-one" /><div className="art-decoration art-decoration-two" />
       </section>
-      <section className="auth-form-side"><div className="auth-mobile-brand"><BrandLogo /></div>{children}<div className="auth-footer">© 2026 SlotStudy <span>·</span> Your personal study space</div></section>
+      <section className="auth-form-side">
+        <div className="auth-mobile-brand"><Link to="/" title="Back to home"><BrandLogo /></Link></div>
+        <div style={{ marginBottom: 12 }}>
+          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#68728a', fontWeight: 600 }}>
+            <ArrowLeft size={14} /> Back to Home
+          </Link>
+        </div>
+        {children}
+        <div className="auth-footer">© 2026 SlotStudy <span>·</span> Your personal study space</div>
+      </section>
     </main>
   );
 }
