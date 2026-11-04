@@ -19,15 +19,17 @@
   --shadow: 0 9px 28px rgb(34 46 83 / 5%);
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; min-height: 100vh; background: #f7f8fc; }
-button, input, select, textarea { font: inherit; }
-button, a { -webkit-tap-highlight-color: transparent; }
-button { cursor: pointer; }
-a { color: inherit; text-decoration: none; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgb(70 103 232 / 35%); outline-offset: 2px; }
-h1, h2, h3, p { margin-top: 0; }
-h1, h2, h3, .brand-lockup, .button { font-family: "Manrope", "DM Sans", sans-serif; }
+@layer base {
+  * { box-sizing: border-box; }
+  body { margin: 0; min-width: 320px; min-height: 100vh; background: #f7f8fc; }
+  button, input, select, textarea { font: inherit; }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  button { cursor: pointer; }
+  a { text-decoration: none; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgb(70 103 232 / 35%); outline-offset: 2px; }
+  h1, h2, h3, p { margin-top: 0; }
+  h1, h2, h3, .brand-lockup, .button { font-family: "Manrope", "DM Sans", sans-serif; }
+}
 
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar { width: 252px; height: 100vh; position: fixed; inset: 0 auto 0 0; display: flex; flex-direction: column; padding: 26px 15px 15px; background: #fff; border-right: 1px solid #eceef4; z-index: 20; }
@@ -947,4 +949,57 @@ html.dark {
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* =========================================================================
+   Landing page animations (scoped with the `ls-` prefix)
+   ========================================================================= */
+.ls-reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); will-change: opacity, transform; }
+.ls-reveal.is-visible { opacity: 1; transform: none; }
+
+@keyframes ls-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@keyframes ls-float-alt { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(10px) rotate(1.5deg); } }
+@keyframes ls-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes ls-gradient { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@keyframes ls-pulse-ring { 0% { transform: scale(.8); opacity: .7; } 100% { transform: scale(2.2); opacity: 0; } }
+@keyframes ls-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes ls-fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes ls-pop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes ls-blink { 0%,80%,100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+@keyframes ls-drift { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-24px) scale(1.08); } }
+@keyframes ls-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+@keyframes ls-dash { to { stroke-dashoffset: 0; } }
+@keyframes ls-wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+
+.ls-float { animation: ls-float 6s ease-in-out infinite; }
+.ls-float-alt { animation: ls-float-alt 7s ease-in-out infinite; }
+.ls-float-slow { animation: ls-float 9s ease-in-out infinite; }
+.ls-marquee { width: max-content; animation: ls-marquee 38s linear infinite; }
+.ls-marquee-wrap:hover .ls-marquee { animation-play-state: paused; }
+.ls-gradient-text { background-size: 200% 200%; animation: ls-gradient 8s ease infinite; }
+.ls-orb { animation: ls-drift 14s ease-in-out infinite; }
+.ls-bar { height: 8px; border-radius: 99px; overflow: hidden; background: #e8ecfa; }
+.ls-bar > span { display: block; height: 100%; width: var(--w, 50%); border-radius: inherit; transform-origin: left; animation: ls-grow 1.2s cubic-bezier(.2,.7,.2,1) .15s both; }
+.ls-panel { animation: ls-fade-up .5s cubic-bezier(.2,.7,.2,1) both; }
+.ls-pop { animation: ls-pop .45s cubic-bezier(.2,.7,.2,1) both; }
+.ls-dot { animation: ls-blink 1.2s infinite; }
+.ls-dot:nth-child(2) { animation-delay: .15s; }
+.ls-dot:nth-child(3) { animation-delay: .3s; }
+.ls-beacon::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: inherit; animation: ls-pulse-ring 1.8s ease-out infinite; }
+.ls-shimmer { background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 55%) 50%, transparent 70%); background-size: 200% 100%; animation: ls-shimmer 3.2s linear infinite; }
+.ls-grid-bg { background-image: linear-gradient(to right, rgb(70 103 232 / 7%) 1px, transparent 1px), linear-gradient(to bottom, rgb(70 103 232 / 7%) 1px, transparent 1px); background-size: 44px 44px; mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 40%, transparent 100%); -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 40%, transparent 100%); }
+.ls-card-hover { transition: transform .3s cubic-bezier(.2,.7,.2,1), box-shadow .3s, border-color .3s; }
+.ls-card-hover:hover { transform: translateY(-6px); box-shadow: 0 22px 44px -18px rgb(70 103 232 / 28%); border-color: #c8d1ff; }
+.ls-card-hover:hover .ls-icon-wiggle { animation: ls-wiggle .6s ease; }
+.ls-faq-body, .ls-accordion-content { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease; }
+.ls-faq-body.open, .ls-accordion-content.is-open { grid-template-rows: 1fr; opacity: 1; }
+.ls-faq-body > div, .ls-accordion-inner { overflow: hidden; }
+.ls-step-line { stroke-dasharray: 600; stroke-dashoffset: 600; }
+.is-visible .ls-step-line { animation: ls-dash 1.6s ease .3s forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-reveal { opacity: 1; transform: none; transition: none; }
+  .ls-float, .ls-float-alt, .ls-float-slow, .ls-marquee, .ls-gradient-text, .ls-orb, .ls-dot, .ls-beacon::after, .ls-shimmer { animation: none !important; }
+  .ls-bar > span, .ls-panel, .ls-pop { animation: none !important; }
+  .ls-step-line { stroke-dashoffset: 0; }
 }
