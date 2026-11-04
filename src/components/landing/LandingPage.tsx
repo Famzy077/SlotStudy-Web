@@ -14,6 +14,7 @@ import {
   FolderKanban,
   Laptop,
   Loader2,
+  LockKeyhole,
   Menu,
   Moon,
   RefreshCw,
@@ -1288,8 +1289,8 @@ export default function LandingPage() {
                     </div>
                   )}
 
-                  <p className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
-                    🔒 Zero spam. Only release milestones and priority invites.
+                  <p className="text-[11px] flex gap-2 font-mono text-slate-400 dark:text-slate-500">
+                    <LockKeyhole size={12} /> Zero spam. Only release milestones and priority invites.
                   </p>
                 </form>
               </div>
@@ -1372,7 +1373,7 @@ export default function LandingPage() {
 
           {/* Bottom Bar: Copyright & Screen Theme Indicator */}
           <div className="border-t border-slate-100 dark:border-slate-800/80 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-400 dark:text-slate-500">
-            <div>© {new Date().getFullYear()} SlotStudy · Built with ❤️ for students worldwide</div>
+            <div>© {new Date().getFullYear()} SlotStudy for students</div>
             <div className="flex items-center gap-3">
               <span>Theme: {theme === 'dark' ? 'Dark Screen' : 'Light Screen'}</span>
               <button

@@ -101,8 +101,30 @@ export function DashboardPage() {
   const stats = dashboard.data || {};
   const recentCourses = list<Course>(stats.recentCourses, 'recentCourses');
   const visibleCourses = recentCourses.length ? recentCourses : courses;
-  const university = user?.university || getPath(stats, 'university');
-  const name = user?.name?.split(' ')[0] || 'there';
+  const university = user?.university || getPath(stats, 'university') || getPath(stats, 'user.university');
+  const name = user?.name?.split(' ')[0] || (getPath(stats, 'user.name') as string)?.split(' ')[0] || 'there';
+
+  useEffect(() => {
+    const serverUni = getPath(stats, 'university') || getPath(stats, 'user.university');
+    const serverProgram = getPath(stats, 'program') || getPath(stats, 'user.program');
+    const serverYear = getPath(stats, 'yearOfStudy') || getPath(stats, 'user.yearOfStudy');
+    const serverSetup = getPath(stats, 'academicSetupCompleted') ?? getPath(stats, 'user.academicSetupCompleted');
+
+    if (serverUni && typeof serverUni === 'string' && (!user?.university || user.university !== serverUni)) {
+      useAuth.setState((state) => ({
+        user: state.user
+          ? {
+              ...state.user,
+              university: serverUni,
+              program: typeof serverProgram === 'string' ? serverProgram : state.user.program,
+              yearOfStudy: typeof serverYear === 'number' ? serverYear : state.user.yearOfStudy,
+              academicSetupCompleted: typeof serverSetup === 'boolean' ? serverSetup : state.user.academicSetupCompleted,
+            }
+          : state.user,
+      }));
+    }
+  }, [stats, user]);
+
   return <div className="dashboard-page">
     <div className="welcome-strip">
       <div><span className="eyebrow">YOUR STUDY SPACE</span><h1>{greeting()}, {name}<span className="wave">✳</span></h1><p>A fresh day to get one step closer to where you’re going.</p>
