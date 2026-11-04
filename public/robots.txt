@@ -14,4 +14,4 @@ Disallow: /profile/
 Disallow: /settings/
 Disallow: /subscription/
 
-Sitemap: https://slotstudy.com/sitemap.xml
+Sitemap: https://slotstudyonline.com/sitemap.xml
