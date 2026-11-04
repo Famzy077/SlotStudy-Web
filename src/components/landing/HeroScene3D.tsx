@@ -235,7 +235,7 @@ export default function HeroScene3D() {
       const h = container.clientHeight || 480;
       renderer.setSize(w, h);
       camera.aspect = w / h;
-      camera.position.z = w / h < 0.9 ? 14 : 12;
+      camera.position.z = w < 440 ? 14.5 : (w < 640 ? 13.5 : (w / h < 0.9 ? 13 : 12));
       camera.updateProjectionMatrix();
     };
     resize();

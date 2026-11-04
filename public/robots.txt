@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /onboarding/
+Disallow: /dashboard/
+Disallow: /courses/
+Disallow: /materials/
+Disallow: /ai/
+Disallow: /summaries/
+Disallow: /study-room/
+Disallow: /quizzes/
+Disallow: /progress/
+Disallow: /notifications/
+Disallow: /profile/
+Disallow: /settings/
+Disallow: /subscription/
+
+Sitemap: https://slotstudy.com/sitemap.xml

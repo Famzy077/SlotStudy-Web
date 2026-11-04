@@ -200,11 +200,19 @@ const MATERIAL_TAGS = [
 /* ------------------------------------------------------------------ */
 
 function SlotStudyBrandLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const iconSizes = { sm: 'h-8 w-8', md: 'h-10 w-10', lg: 'h-12 w-12' };
-  const textSizes = { sm: 'text-lg', md: 'text-xl', lg: 'text-2xl' };
+  const iconSizes = {
+    sm: 'h-7 w-7 sm:h-8 sm:w-8',
+    md: 'h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10',
+    lg: 'h-9 w-9 sm:h-11 sm:w-11 lg:h-12 lg:w-12',
+  };
+  const textSizes = {
+    sm: 'text-base sm:text-lg',
+    md: 'text-lg sm:text-xl',
+    lg: 'text-xl sm:text-2xl',
+  };
 
   return (
-    <div className="flex items-center gap-2.5 select-none">
+    <div className="flex items-center gap-2 sm:gap-2.5 select-none">
       <img
         src="/images/slotstudy-icon.png"
         alt="SlotStudy"
@@ -216,7 +224,7 @@ function SlotStudyBrandLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
           <span className="text-[#10b981] dark:text-[#10b981]">Study</span>
           <span className="h-1.5 w-1.5 rounded-full bg-[#f59e0b] ml-0.5 inline-block" />
         </div>
-        <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mt-0.5 font-mono">
+        <span className="hidden sm:inline-block text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mt-0.5 font-mono">
           AI Academic Workspace
         </span>
       </div>
@@ -620,7 +628,7 @@ export default function LandingPage() {
             : 'bg-transparent'
         }`}
       >
-        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-[64px] sm:h-[72px] max-w-7xl items-center justify-between px-3.5 sm:px-6 lg:px-8">
           {/* Official SlotStudy Brand Logo */}
           <Link to="/" aria-label="SlotStudy home" className="group flex items-center">
             <SlotStudyBrandLogo size="md" />
@@ -640,13 +648,13 @@ export default function LandingPage() {
           </nav>
 
           {/* Action CTAs & Theme Toggle */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             {/* Dark / Light Screen Switcher */}
             <button
               type="button"
               onClick={toggleTheme}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm transition-all hover:scale-105"
+              className="p-1.5 sm:p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm transition-all hover:scale-105"
             >
               {theme === 'dark' ? (
                 <Sun size={17} className="text-amber-400 animate-spin-slow" />
@@ -673,7 +681,7 @@ export default function LandingPage() {
 
             <Link
               to="/register"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] px-4 py-2.5 text-[13px] font-extrabold text-white shadow-md shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/35"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-[13px] font-extrabold text-white shadow-md shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/35"
             >
               <span>Get Started</span>
               <ArrowRight size={14} />
@@ -684,65 +692,74 @@ export default function LandingPage() {
               onClick={() => setMenuOpen((o) => !o)}
               aria-label="Toggle menu"
               aria-expanded={menuOpen}
-              className="rounded-lg p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden"
+              className="rounded-xl p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 md:hidden"
             >
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
 
-        {/* Mobile dropdown */}
+        {/* Mobile dropdown backdrop & drawer */}
         {menuOpen && (
-          <div className="ls-panel border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pb-6 pt-3 md:hidden shadow-xl">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-[#2563eb] dark:hover:text-blue-400"
-              >
-                {link.label}
-              </a>
-            ))}
-            <div className="mt-4 grid gap-2 border-t border-slate-150 dark:border-slate-800 pt-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  setApkOpen(true);
-                }}
-                className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 py-2.5 text-center text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 flex items-center justify-center gap-2"
-              >
-                <Smartphone size={15} /> Download Android APK (v1.0.0)
-              </button>
-              <div className="grid grid-cols-2 gap-2">
-                <Link
-                  to="/login"
-                  className="rounded-xl border border-slate-200 dark:border-slate-700 py-2.5 text-center text-sm font-bold text-slate-700 dark:text-slate-200"
+          <>
+            <div
+              className="fixed inset-0 top-[64px] z-40 bg-black/40 backdrop-blur-xs md:hidden"
+              onClick={() => setMenuOpen(false)}
+              aria-hidden="true"
+            />
+            <div className="relative z-50 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0b0f19]/95 backdrop-blur-xl px-4 pb-6 pt-3 md:hidden shadow-2xl">
+              {NAV_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-[#2563eb] dark:hover:text-blue-400"
                 >
-                  Sign in
-                </Link>
-                <Link
-                  to="/register"
-                  className="rounded-xl bg-[#2563eb] py-2.5 text-center text-sm font-bold text-white shadow-md shadow-blue-500/25"
+                  {link.label}
+                </a>
+              ))}
+              <div className="mt-4 grid gap-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setApkOpen(true);
+                  }}
+                  className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 py-2.5 text-center text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 flex items-center justify-center gap-2"
                 >
-                  Get Started
-                </Link>
+                  <Smartphone size={15} /> Download Android APK (v1.0.0)
+                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    to="/login"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-xl border border-slate-200 dark:border-slate-700 py-2.5 text-center text-sm font-bold text-slate-700 dark:text-slate-200"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-xl bg-[#2563eb] py-2.5 text-center text-sm font-bold text-white shadow-md shadow-blue-500/25"
+                  >
+                    Get Started
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
+          </>
         )}
       </header>
 
       {/* =========================================================================
           2. HERO SECTION & 3D INTERACTIVE EXPERIENCE
           ========================================================================= */}
-      <section className="relative isolate overflow-hidden pt-8 pb-16 sm:pt-14 sm:pb-24">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8">
+      <section className="relative isolate overflow-hidden pt-6 pb-12 sm:pt-14 sm:pb-24">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8">
           {/* Left Column: Headlines & Dual CTAs */}
           <div className="lg:col-span-6 text-left">
             <Reveal>
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 dark:border-blue-900 bg-white dark:bg-slate-900 px-3.5 py-1.5 text-xs font-mono font-bold text-[#2563eb] dark:text-blue-400 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 dark:border-blue-900 bg-white dark:bg-slate-900 px-3 py-1 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs font-mono font-bold text-[#2563eb] dark:text-blue-400 shadow-sm">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -752,30 +769,30 @@ export default function LandingPage() {
             </Reveal>
 
             <Reveal delay={80}>
-              <h1 className="mt-5 font-[Manrope] text-4xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.08]">
+              <h1 className="mt-4 sm:mt-5 font-[Manrope] text-3xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08]">
                 Master Every Course.
                 <span className="block mt-1 bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#10b981] bg-clip-text text-transparent">
                   Powered by AI.
                 </span>
-                <span className="block mt-1 text-slate-700 dark:text-slate-300 text-3xl sm:text-4xl font-bold">
+                <span className="block mt-1 text-slate-700 dark:text-slate-300 text-2xl sm:text-4xl font-bold">
                   Engineered for Top Grades.
                 </span>
               </h1>
             </Reveal>
 
             <Reveal delay={160}>
-              <p className="mt-5 max-w-xl text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+              <p className="mt-4 sm:mt-5 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
                 Transform messy lecture slides, 60-page PDF textbooks, and syllabus notes into instant structured study briefs, practice quiz arenas, and a 24/7 AI tutor. Synchronized across Web and Android.
               </p>
             </Reveal>
 
             <Reveal delay={240}>
               {/* Dual Primary Conversion Buttons */}
-              <div className="mt-8 flex flex-col gap-3.5 sm:flex-row items-stretch sm:items-center">
+              <div className="mt-6 sm:mt-8 flex flex-col gap-3 sm:flex-row items-stretch sm:items-center">
                 {/* 1. Web CTA */}
                 <Link
                   to="/register"
-                  className="group inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#2563eb] via-[#1d4ed8] to-[#2563eb] px-7 py-3.5 text-sm font-extrabold text-white shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-0.5 hover:shadow-blue-500/40"
+                  className="group inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#2563eb] via-[#1d4ed8] to-[#2563eb] px-6 sm:px-7 py-3 sm:py-3.5 text-sm font-extrabold text-white shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-0.5 hover:shadow-blue-500/40"
                 >
                   <Laptop size={17} />
                   <span>Get Started on Web</span>
@@ -786,7 +803,7 @@ export default function LandingPage() {
                 <button
                   type="button"
                   onClick={() => setApkOpen(true)}
-                  className="group inline-flex items-center justify-center gap-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-3.5 text-sm font-bold text-slate-800 dark:text-slate-200 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#10b981] hover:shadow-md"
+                  className="group inline-flex items-center justify-center gap-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-3 sm:py-3.5 text-sm font-bold text-slate-800 dark:text-slate-200 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#10b981] hover:shadow-md"
                 >
                   <Smartphone size={17} className="text-[#10b981]" />
                   <span>Download Android App</span>
@@ -798,7 +815,7 @@ export default function LandingPage() {
             </Reveal>
 
             <Reveal delay={320}>
-              <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <ul className="mt-6 sm:mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <li className="flex items-center gap-1.5">
                   <CheckCircle2 size={15} className="text-[#10b981]" /> Free account setup
                 </li>
@@ -813,16 +830,16 @@ export default function LandingPage() {
           </div>
 
           {/* Right Column: 3D Scene + Floating Live Student Chips */}
-          <div className="lg:col-span-6 relative">
-            <Reveal delay={180} className="relative mx-auto h-[380px] w-full max-w-[540px] sm:h-[460px] lg:h-[500px]">
+          <div className="lg:col-span-6 relative mt-2 sm:mt-0">
+            <Reveal delay={180} className="relative mx-auto h-[290px] sm:h-[440px] lg:h-[500px] w-full max-w-[540px]">
               {/* Subtle ambient backdrop */}
               <div className="absolute inset-4 rounded-3xl bg-gradient-to-tr from-blue-100/60 via-indigo-50/40 to-emerald-50/60 dark:from-blue-900/20 dark:via-purple-900/15 dark:to-emerald-900/20 blur-xl -z-10" />
 
               {/* 3D Canvas */}
               <HeroScene3D />
 
-              {/* Floating Live Badge 1: Streak */}
-              <div className="ls-float pointer-events-none absolute left-0 top-6 flex items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-blue-500/10 backdrop-blur sm:left-2">
+              {/* Floating Live Badge 1: Streak (Desktop only) */}
+              <div className="hidden sm:flex ls-float pointer-events-none absolute left-0 top-6 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-blue-500/10 backdrop-blur sm:left-2">
                 <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 border border-amber-200/60 dark:border-amber-800/60">
                   <Flame size={18} />
                 </span>
@@ -832,8 +849,8 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Floating Live Badge 2: AI Summary */}
-              <div className="ls-float-alt pointer-events-none absolute right-0 top-20 flex items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-purple-500/10 backdrop-blur sm:right-2">
+              {/* Floating Live Badge 2: AI Summary (Desktop only) */}
+              <div className="hidden sm:flex ls-float-alt pointer-events-none absolute right-0 top-20 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-purple-500/10 backdrop-blur sm:right-2">
                 <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563eb] dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60">
                   <Sparkles size={18} />
                 </span>
@@ -843,8 +860,8 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Floating Live Badge 3: Quiz Score */}
-              <div className="ls-float-slow pointer-events-none absolute bottom-4 left-4 flex items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-emerald-500/10 backdrop-blur sm:left-6">
+              {/* Floating Live Badge 3: Quiz Score (Desktop only) */}
+              <div className="hidden sm:flex ls-float-slow pointer-events-none absolute bottom-4 left-4 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-emerald-500/10 backdrop-blur sm:left-6">
                 <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10b981] border border-emerald-200/60 dark:border-emerald-800/60">
                   <Check size={18} />
                 </span>
@@ -854,6 +871,25 @@ export default function LandingPage() {
                 </div>
               </div>
             </Reveal>
+
+            {/* Mobile Feature Chips (clean 3-column deck beneath 3D scene on phones) */}
+            <div className="sm:hidden mt-3 grid grid-cols-3 gap-2 px-1">
+              <div className="flex flex-col items-center text-center p-2 rounded-xl bg-white/85 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800 shadow-sm backdrop-blur-xs">
+                <span className="text-amber-500 mb-0.5"><Flame size={16} /></span>
+                <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white leading-tight">14-Day Streak</b>
+                <span className="text-[9px] font-mono text-slate-400">+2,450 XP</span>
+              </div>
+              <div className="flex flex-col items-center text-center p-2 rounded-xl bg-white/85 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800 shadow-sm backdrop-blur-xs">
+                <span className="text-[#2563eb] dark:text-blue-400 mb-0.5"><Sparkles size={16} /></span>
+                <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white leading-tight">AI Summaries</b>
+                <span className="text-[9px] font-mono text-slate-400">3 min read</span>
+              </div>
+              <div className="flex flex-col items-center text-center p-2 rounded-xl bg-white/85 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800 shadow-sm backdrop-blur-xs">
+                <span className="text-[#10b981] mb-0.5"><CheckCircle2 size={16} /></span>
+                <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white leading-tight">Smart Quizzes</b>
+                <span className="text-[9px] font-mono text-slate-400">95% Score</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

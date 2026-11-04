@@ -162,7 +162,7 @@ export function AppShell() {
       window.setTimeout(() => setToast(''), 4500);
     } finally {
       logout();
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
     }
   }
 

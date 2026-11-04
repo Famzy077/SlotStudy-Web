@@ -49,7 +49,7 @@ export function SettingsPage() {
     try {
       await api.delete('/settings/account');
       useAuth.getState().logout();
-      window.location.assign('/login');
+      window.location.assign('/');
     } catch (error) {
       setMessage(getErrorMessage(error));
     }
