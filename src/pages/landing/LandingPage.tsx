@@ -28,8 +28,8 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import HeroScene3D from './HeroScene3D';
-import Reveal from './Reveal';
+import HeroScene3D from '../../components/landing/HeroScene3D';
+import Reveal from '../../components/landing/Reveal';
 import api, { getErrorMessage } from '../../lib/api';
 
 /** Point this at your hosted APK (set `VITE_ANDROID_APK_URL` in Vercel) – falls back to /downloads/. */

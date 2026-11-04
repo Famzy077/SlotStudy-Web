@@ -36,3 +36,10 @@ export function formatStudyHours(hours: number | string): string {
   if (!Number.isFinite(hours)) return '—';
   return formatDurationSeconds(hours * 60 * 60);
 }
+
+export function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}m ${s}s`;
+}
+
