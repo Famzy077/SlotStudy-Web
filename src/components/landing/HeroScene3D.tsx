@@ -41,7 +41,7 @@ export default function HeroScene3D() {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-    camera.position.set(0, 0.6, 12);
+    camera.position.set(0, 0.3, 11);
 
     const renderer = new THREE.WebGLRenderer({ antialias: !isSmall, alpha: true, powerPreference: 'default' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isSmall ? 1.5 : 2));
@@ -235,7 +235,8 @@ export default function HeroScene3D() {
       const h = container.clientHeight || 480;
       renderer.setSize(w, h);
       camera.aspect = w / h;
-      camera.position.z = w < 440 ? 14.5 : (w < 640 ? 13.5 : (w / h < 0.9 ? 13 : 12));
+      camera.position.z = w < 440 ? 10.2 : (w < 640 ? 10.8 : (w / h < 0.9 ? 11.8 : 11.2));
+      camera.position.y = 0.3;
       camera.updateProjectionMatrix();
     };
     resize();

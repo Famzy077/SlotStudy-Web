@@ -607,7 +607,7 @@ export default function LandingPage() {
   const ActivePreview = active.Comp;
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f8faff] dark:bg-[#070a13] font-[DM_Sans] text-slate-800 dark:text-slate-100 selection:bg-[#2563eb] selection:text-white transition-colors duration-300">
+    <div className="min-h-screen overflow-x-clip bg-[#f8faff] dark:bg-[#070a13] font-[DM_Sans] text-slate-800 dark:text-slate-100 selection:bg-[#2563eb] selection:text-white transition-colors duration-300">
       {/* Background Architectural Grid & Subtle Radial Glows */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="ls-grid-bg absolute inset-0 opacity-70 dark:opacity-40" />
@@ -619,13 +619,13 @@ export default function LandingPage() {
       </div>
 
       {/* =========================================================================
-          1. NAVBAR
+          1. NAVBAR (FIXED STICKY ON SCROLL)
           ========================================================================= */}
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
-            ? 'border-b border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-[#070a13]/85 shadow-[0_4px_20px_-10px_rgb(37_99_235/15%)] backdrop-blur-xl'
-            : 'bg-transparent'
+            ? 'border-b border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-[#070a13]/90 shadow-[0_4px_20px_-10px_rgb(37_99_235/15%)] backdrop-blur-xl'
+            : 'border-b border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-[#070a13]/80 backdrop-blur-md'
         }`}
       >
         <div className="mx-auto flex h-[64px] sm:h-[72px] max-w-7xl items-center justify-between px-3.5 sm:px-6 lg:px-8">
@@ -754,7 +754,7 @@ export default function LandingPage() {
       {/* =========================================================================
           2. HERO SECTION & 3D INTERACTIVE EXPERIENCE
           ========================================================================= */}
-      <section className="relative isolate overflow-hidden pt-6 pb-12 sm:pt-14 sm:pb-24">
+      <section className="relative isolate overflow-hidden pt-[84px] sm:pt-[104px] pb-12 sm:pb-24">
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8">
           {/* Left Column: Headlines & Dual CTAs */}
           <div className="lg:col-span-6 text-left">
@@ -769,19 +769,19 @@ export default function LandingPage() {
             </Reveal>
 
             <Reveal delay={80}>
-              <h1 className="mt-4 sm:mt-5 font-[Manrope] text-3xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08]">
+              <h1 className="mt-4 sm:mt-5 font-[Manrope] text-[30px] sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08]">
                 Master Every Course.
                 <span className="block mt-1 bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#10b981] bg-clip-text text-transparent">
                   Powered by AI.
                 </span>
-                <span className="block mt-1 text-slate-700 dark:text-slate-300 text-2xl sm:text-4xl font-bold">
+                <span className="block mt-1 text-slate-700 dark:text-slate-300 text-xl sm:text-4xl font-bold">
                   Engineered for Top Grades.
                 </span>
               </h1>
             </Reveal>
 
             <Reveal delay={160}>
-              <p className="mt-4 sm:mt-5 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+              <p className="mt-3.5 sm:mt-5 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
                 Transform messy lecture slides, 60-page PDF textbooks, and syllabus notes into instant structured study briefs, practice quiz arenas, and a 24/7 AI tutor. Synchronized across Web and Android.
               </p>
             </Reveal>
@@ -792,7 +792,7 @@ export default function LandingPage() {
                 {/* 1. Web CTA */}
                 <Link
                   to="/register"
-                  className="group inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#2563eb] via-[#1d4ed8] to-[#2563eb] px-6 sm:px-7 py-3 sm:py-3.5 text-sm font-extrabold text-white shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-0.5 hover:shadow-blue-500/40"
+                  className="group inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#2563eb] via-[#1d4ed8] to-[#2563eb] px-6 sm:px-7 py-3.5 text-sm font-extrabold text-white shadow-xl shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:shadow-blue-500/40"
                 >
                   <Laptop size={17} />
                   <span>Get Started on Web</span>
@@ -803,7 +803,7 @@ export default function LandingPage() {
                 <button
                   type="button"
                   onClick={() => setApkOpen(true)}
-                  className="group inline-flex items-center justify-center gap-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-3 sm:py-3.5 text-sm font-bold text-slate-800 dark:text-slate-200 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#10b981] hover:shadow-md"
+                  className="group inline-flex items-center justify-center gap-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-3.5 text-sm font-bold text-slate-800 dark:text-slate-200 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#10b981] hover:shadow-md"
                 >
                   <Smartphone size={17} className="text-[#10b981]" />
                   <span>Download Android App</span>
@@ -815,81 +815,86 @@ export default function LandingPage() {
             </Reveal>
 
             <Reveal delay={320}>
-              <ul className="mt-6 sm:mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <ul className="mt-5 sm:mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <li className="flex items-center gap-1.5">
-                  <CheckCircle2 size={15} className="text-[#10b981]" /> Free account setup
+                  <CheckCircle2 size={14} className="text-[#10b981]" /> Free account setup
                 </li>
                 <li className="flex items-center gap-1.5">
-                  <CheckCircle2 size={15} className="text-[#2563eb] dark:text-blue-400" /> Real-time cross-device sync
+                  <CheckCircle2 size={14} className="text-[#2563eb] dark:text-blue-400" /> Real-time cross-device sync
                 </li>
                 <li className="flex items-center gap-1.5">
-                  <CheckCircle2 size={15} className="text-[#f59e0b]" /> Offline mobile revision
+                  <CheckCircle2 size={14} className="text-[#f59e0b]" /> Offline mobile revision
                 </li>
               </ul>
             </Reveal>
           </div>
 
-          {/* Right Column: 3D Scene + Floating Live Student Chips */}
-          <div className="lg:col-span-6 relative mt-2 sm:mt-0">
-            <Reveal delay={180} className="relative mx-auto h-[290px] sm:h-[440px] lg:h-[500px] w-full max-w-[540px]">
-              {/* Subtle ambient backdrop */}
-              <div className="absolute inset-4 rounded-3xl bg-gradient-to-tr from-blue-100/60 via-indigo-50/40 to-emerald-50/60 dark:from-blue-900/20 dark:via-purple-900/15 dark:to-emerald-900/20 blur-xl -z-10" />
+          {/* Right Column: 3D Scene + Floating Live Student Chips inside Frame */}
+          <div className="lg:col-span-6 relative mt-4 lg:mt-0">
+            <Reveal delay={180}>
+              <div className="relative mx-auto max-w-[540px] rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-gradient-to-b from-white/90 via-slate-50/50 to-white/90 dark:from-slate-900/90 dark:via-slate-900/40 dark:to-slate-900/90 p-3 sm:p-5 shadow-xl shadow-blue-500/5 backdrop-blur-sm">
+                {/* 3D Canvas Container */}
+                <div className="relative h-[250px] sm:h-[380px] lg:h-[440px] w-full">
+                  {/* Subtle ambient backdrop */}
+                  <div className="absolute inset-4 rounded-3xl bg-gradient-to-tr from-blue-100/60 via-indigo-50/40 to-emerald-50/60 dark:from-blue-900/20 dark:via-purple-900/15 dark:to-emerald-900/20 blur-xl -z-10" />
 
-              {/* 3D Canvas */}
-              <HeroScene3D />
+                  {/* 3D Canvas */}
+                  <HeroScene3D />
 
-              {/* Floating Live Badge 1: Streak (Desktop only) */}
-              <div className="hidden sm:flex ls-float pointer-events-none absolute left-0 top-6 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-blue-500/10 backdrop-blur sm:left-2">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 border border-amber-200/60 dark:border-amber-800/60">
-                  <Flame size={18} />
-                </span>
-                <div className="leading-tight">
-                  <b className="block text-[13px] font-[Manrope] text-slate-900 dark:text-white">14-Day Streak</b>
-                  <span className="text-[11px] font-mono text-slate-400">+2,450 XP earned</span>
+                  {/* Floating Live Badge 1: Streak (Desktop only) */}
+                  <div className="hidden sm:flex ls-float pointer-events-none absolute left-0 top-6 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-blue-500/10 backdrop-blur sm:left-2">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 border border-amber-200/60 dark:border-amber-800/60">
+                      <Flame size={18} />
+                    </span>
+                    <div className="leading-tight">
+                      <b className="block text-[13px] font-[Manrope] text-slate-900 dark:text-white">14-Day Streak</b>
+                      <span className="text-[11px] font-mono text-slate-400">+2,450 XP earned</span>
+                    </div>
+                  </div>
+
+                  {/* Floating Live Badge 2: AI Summary (Desktop only) */}
+                  <div className="hidden sm:flex ls-float-alt pointer-events-none absolute right-0 top-16 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-purple-500/10 backdrop-blur sm:right-2">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563eb] dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60">
+                      <Sparkles size={18} />
+                    </span>
+                    <div className="leading-tight">
+                      <b className="block text-[13px] font-[Manrope] text-slate-900 dark:text-white">Summary Ready</b>
+                      <span className="text-[11px] font-mono text-slate-400">BIO201 · 3 min read</span>
+                    </div>
+                  </div>
+
+                  {/* Floating Live Badge 3: Quiz Score (Desktop only) */}
+                  <div className="hidden sm:flex ls-float-slow pointer-events-none absolute bottom-4 left-4 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-emerald-500/10 backdrop-blur sm:left-6">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10b981] border border-emerald-200/60 dark:border-emerald-800/60">
+                      <Check size={18} />
+                    </span>
+                    <div className="leading-tight">
+                      <b className="block text-[13px] font-[Manrope] text-slate-900 dark:text-white">Quiz Score: 9/10</b>
+                      <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">+50 XP rewarded</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              {/* Floating Live Badge 2: AI Summary (Desktop only) */}
-              <div className="hidden sm:flex ls-float-alt pointer-events-none absolute right-0 top-20 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-purple-500/10 backdrop-blur sm:right-2">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563eb] dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60">
-                  <Sparkles size={18} />
-                </span>
-                <div className="leading-tight">
-                  <b className="block text-[13px] font-[Manrope] text-slate-900 dark:text-white">Summary Ready</b>
-                  <span className="text-[11px] font-mono text-slate-400">BIO201 · 3 min read</span>
-                </div>
-              </div>
-
-              {/* Floating Live Badge 3: Quiz Score (Desktop only) */}
-              <div className="hidden sm:flex ls-float-slow pointer-events-none absolute bottom-4 left-4 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-emerald-500/10 backdrop-blur sm:left-6">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10b981] border border-emerald-200/60 dark:border-emerald-800/60">
-                  <Check size={18} />
-                </span>
-                <div className="leading-tight">
-                  <b className="block text-[13px] font-[Manrope] text-slate-900 dark:text-white">Quiz Score: 9/10</b>
-                  <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">+50 XP rewarded</span>
+                {/* Mobile Feature Chips (Clean 3-pill deck docked inside card, 0 horizontal overflow) */}
+                <div className="sm:hidden mt-2 grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-150 dark:border-slate-800">
+                  <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 text-center">
+                    <span className="text-amber-500 mb-0.5"><Flame size={15} /></span>
+                    <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white leading-tight">Streak</b>
+                    <span className="text-[9px] font-mono text-slate-400">14 Days</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 text-center">
+                    <span className="text-[#2563eb] dark:text-blue-400 mb-0.5"><Sparkles size={15} /></span>
+                    <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white leading-tight">Summaries</b>
+                    <span className="text-[9px] font-mono text-slate-400">AI Notes</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 text-center">
+                    <span className="text-[#10b981] mb-0.5"><CheckCircle2 size={15} /></span>
+                    <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white leading-tight">Quizzes</b>
+                    <span className="text-[9px] font-mono text-slate-400">95% Score</span>
+                  </div>
                 </div>
               </div>
             </Reveal>
-
-            {/* Mobile Feature Chips (clean 3-column deck beneath 3D scene on phones) */}
-            <div className="sm:hidden mt-3 grid grid-cols-3 gap-2 px-1">
-              <div className="flex flex-col items-center text-center p-2 rounded-xl bg-white/85 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800 shadow-sm backdrop-blur-xs">
-                <span className="text-amber-500 mb-0.5"><Flame size={16} /></span>
-                <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white leading-tight">14-Day Streak</b>
-                <span className="text-[9px] font-mono text-slate-400">+2,450 XP</span>
-              </div>
-              <div className="flex flex-col items-center text-center p-2 rounded-xl bg-white/85 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800 shadow-sm backdrop-blur-xs">
-                <span className="text-[#2563eb] dark:text-blue-400 mb-0.5"><Sparkles size={16} /></span>
-                <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white leading-tight">AI Summaries</b>
-                <span className="text-[9px] font-mono text-slate-400">3 min read</span>
-              </div>
-              <div className="flex flex-col items-center text-center p-2 rounded-xl bg-white/85 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800 shadow-sm backdrop-blur-xs">
-                <span className="text-[#10b981] mb-0.5"><CheckCircle2 size={16} /></span>
-                <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white leading-tight">Smart Quizzes</b>
-                <span className="text-[9px] font-mono text-slate-400">95% Score</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
