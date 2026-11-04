@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity, Bell, BookOpen, BookOpenCheck, BrainCircuit, ChevronDown, ChevronRight, Command,
-  Compass, Flame, House, LogOut, Menu, Moon, Search, Settings, Sparkles, Sun, Trophy, UserRound, X,
+  Compass, Flame, GraduationCap, House, LogOut, Menu, Moon, Search, Settings, Sparkles, Sun, Trophy, UserRound, X,
 } from 'lucide-react';
 import { AcademicSetupPage, ForgotPasswordPage, LoginPage, RegisterPage, VerifyOtpPage } from './AuthPages';
 import { useAuth } from './lib/auth';
@@ -32,6 +32,8 @@ function AppShell() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
+  const [topProfileOpen, setTopProfileOpen] = useState(false);
+  const topProfileRef = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('slotstudy-theme') || 'system');
   const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const [toast, setToast] = useState('');
@@ -53,6 +55,43 @@ function AppShell() {
         : pathname.startsWith('/study-room') ? 'Study buddy'
           : pathname.startsWith('/quizzes/') ? 'Quiz space'
             : pathname.split('/')[1]?.replaceAll('-', ' ') || 'Dashboard';
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (topProfileRef.current && !topProfileRef.current.contains(event.target as Node)) {
+        setTopProfileOpen(false);
+      }
+    }
+    if (topProfileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [topProfileOpen]);
+
+  useEffect(() => {
+    if (dashboardStats.data) {
+      const serverUser = (dashboardStats.data.user || {}) as Record<string, unknown>;
+      const serverAvatar = (serverUser.avatarUrl || dashboardStats.data.avatarUrl) as string | null | undefined;
+      const serverUniversity = (serverUser.university || dashboardStats.data.university) as string | null | undefined;
+      const serverName = (serverUser.name || dashboardStats.data.name) as string | null | undefined;
+
+      const current = useAuth.getState().user;
+      if (current && (
+        (serverAvatar && current.avatarUrl !== serverAvatar) ||
+        (serverUniversity && current.university !== serverUniversity) ||
+        (serverName && current.name !== serverName)
+      )) {
+        useAuth.setState((state) => ({
+          user: state.user ? {
+            ...state.user,
+            ...(serverAvatar ? { avatarUrl: serverAvatar } : {}),
+            ...(serverUniversity ? { university: serverUniversity } : {}),
+            ...(serverName ? { name: serverName } : {}),
+          } : state.user,
+        }));
+      }
+    }
+  }, [dashboardStats.data]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
@@ -82,7 +121,7 @@ function AppShell() {
         event.preventDefault();
         setSearchOpen((open) => !open);
       }
-      if (event.key === 'Escape') { setSearchOpen(false); setSidebarOpen(false); setProfileOpen(false); }
+      if (event.key === 'Escape') { setSearchOpen(false); setSidebarOpen(false); setProfileOpen(false); setTopProfileOpen(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -119,7 +158,14 @@ function AppShell() {
         <Link to="/subscription" className="plan-card"><div className="plan-icon"><Sparkles size={16} /></div><div><b>Subscription</b><span>View your current plan</span></div><ChevronRight size={15} /></Link>
         <Link to="/notifications" className={`nav-link ${pathname === '/notifications' ? 'nav-active' : ''}`}><Bell size={18} /><span>Notifications</span>{hasUnreadNotifications && <span className="notification-dot" />}</Link>
         <button className="profile-tile" onClick={() => setProfileOpen(!profileOpen)}>
-          <span className="avatar">{(user?.name || 'U').slice(0, 1).toUpperCase()}</span><span className="profile-identity"><b>{user?.name || 'Your profile'}</b><small>{user?.email || ''}</small></span><ChevronDown size={16} />
+          <span className="avatar">
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" className="avatar-img" />
+            ) : (
+              (user?.name || 'U').slice(0, 1).toUpperCase()
+            )}
+          </span>
+          <span className="profile-identity"><b>{user?.name || 'Your profile'}</b><small>{user?.email || ''}</small></span><ChevronDown size={16} />
         </button>
         {profileOpen && <div className="profile-menu"><Link to="/profile" onClick={() => setProfileOpen(false)}><UserRound size={16} /> My profile</Link><Link to="/settings" onClick={() => setProfileOpen(false)}><Settings size={16} /> Settings</Link><button onClick={handleLogout}><LogOut size={16} /> Sign out</button></div>}
       </div>
@@ -133,14 +179,93 @@ function AppShell() {
           <div className="top-stat xp-stat"><span className="top-stat-icon xp-icon"><Trophy size={15} /></span><b>{xp ?? '—'}</b><small>XP</small></div>
           <button className="icon-button theme-toggle" onClick={() => { const nextTheme = dark ? 'light' : 'dark'; setTheme(nextTheme); window.dispatchEvent(new CustomEvent('slotstudy-theme-change', { detail: nextTheme })); }} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}>{dark ? <Sun size={18} /> : <Moon size={18} />}</button>
           <Link className="icon-button notification-button" to="/notifications" aria-label={hasUnreadNotifications ? 'Notifications, unread items' : 'Notifications'}><Bell size={18} />{hasUnreadNotifications && <span className="notification-dot" />}</Link>
-          <button className="top-avatar" onClick={() => setProfileOpen(!profileOpen)} aria-label="Open profile">{(user?.name || 'U').slice(0, 1).toUpperCase()}</button>
+          <div className="topbar-profile-container" ref={topProfileRef}>
+            <button
+              className="top-avatar"
+              onClick={() => setTopProfileOpen((open) => !open)}
+              aria-label="Open profile menu"
+              aria-expanded={topProfileOpen}
+            >
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user?.name || 'Profile'} className="top-avatar-img" />
+              ) : (
+                (user?.name || 'U').slice(0, 1).toUpperCase()
+              )}
+            </button>
+            {topProfileOpen && (
+              <div className="topbar-profile-dropdown">
+                <div className="topbar-profile-meta">
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="topbar-profile-dropdown-img" />
+                  ) : (
+                    <span className="topbar-profile-dropdown-fallback">{(user?.name || 'U').slice(0, 1).toUpperCase()}</span>
+                  )}
+                  <div className="topbar-profile-text">
+                    <b>{user?.name || 'Student'}</b>
+                    <small>{user?.email || ''}</small>
+                    {user?.university && (
+                      <span className="topbar-profile-uni">
+                        <GraduationCap size={11} /> {user.university}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="dropdown-divider" />
+                <Link to="/profile" onClick={() => setTopProfileOpen(false)}>
+                  <UserRound size={15} /> My profile
+                </Link>
+                <Link to="/settings" onClick={() => setTopProfileOpen(false)}>
+                  <Settings size={15} /> Settings
+                </Link>
+                <div className="dropdown-divider" />
+                <button
+                  className="dropdown-signout"
+                  onClick={() => {
+                    setTopProfileOpen(false);
+                    handleLogout();
+                  }}
+                >
+                  <LogOut size={15} /> Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       <main className="page-content"><Outlet /></main>
       <footer className="app-footer"><span>Made for your next big idea.</span><span><span className="footer-heart">✳</span> Keep showing up</span></footer>
     </div>
     <nav className="mobile-nav">
-      {[{ name: 'Home', to: '/dashboard', icon: House }, { name: 'Courses', to: '/courses', icon: BookOpen }, { name: 'AI', to: '/ai', icon: Sparkles }, { name: 'Buddy', to: '/study-room', icon: BrainCircuit }, { name: 'Profile', to: '/profile', icon: UserRound }].map(({ name, to, icon: Icon }) => <Link key={to} to={to} className={pathname.startsWith(to) ? 'mobile-nav-active' : ''}><Icon size={19} /><span>{name}</span></Link>)}
+      {[
+        { name: 'Home', to: '/dashboard', icon: House },
+        { name: 'Courses', to: '/courses', icon: BookOpen },
+        { name: 'AI', to: '/ai', icon: Sparkles },
+        { name: 'Buddy', to: '/study-room', icon: BrainCircuit },
+        { name: 'Profile', to: '/profile', icon: UserRound },
+      ].map(({ name, to, icon: Icon }) => (
+        <Link
+          key={to}
+          to={to}
+          className={pathname.startsWith(to) ? 'mobile-nav-active' : ''}
+          onClick={() => {
+            setTopProfileOpen(false);
+            setSidebarOpen(false);
+          }}
+        >
+          {name === 'Profile' ? (
+            <span className={`mobile-nav-avatar-wrap ${pathname.startsWith('/profile') ? 'mobile-nav-avatar-active' : ''}`}>
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="Profile" className="mobile-nav-avatar-img" />
+              ) : (
+                <span className="mobile-nav-avatar-initial">{(user?.name || 'U').slice(0, 1).toUpperCase()}</span>
+              )}
+            </span>
+          ) : (
+            <Icon size={19} />
+          )}
+          <span>{name}</span>
+        </Link>
+      ))}
     </nav>
     {searchOpen && <div className="overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setSearchOpen(false); }}><div className="search-dialog"><div className="search-dialog-input"><Search size={19} /><input autoFocus value={searchValue} onChange={(event) => setSearchValue(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') performSearch(searchValue); }} placeholder="Search courses, summaries and materials…" /><button onClick={() => setSearchOpen(false)}><kbd>ESC</kbd></button></div><div className="search-dialog-hint"><span>QUICK LINKS</span><button onClick={() => { navigate('/courses'); setSearchOpen(false); }}><BookOpen size={15} /> My courses <ChevronRight size={14} /></button><button onClick={() => { navigate('/ai'); setSearchOpen(false); }}><Sparkles size={15} /> AI summaries <ChevronRight size={14} /></button><button onClick={() => { navigate('/study-room'); setSearchOpen(false); }}><BrainCircuit size={15} /> Study buddy <ChevronRight size={14} /></button></div></div></div>}
     {toast && <div className="toast-message">{toast}</div>}

@@ -25,7 +25,14 @@ function formatDurationSeconds(value: number): string {
     : unit(days, 'day');
 }
 
-export function formatStudyHours(hours: number): string {
+export function formatStudyHours(hours: number | string): string {
+  if (typeof hours === 'string') {
+    const parsed = Number(hours);
+    if (isNaN(parsed)) {
+      return hours;
+    }
+    hours = parsed;
+  }
   if (!Number.isFinite(hours)) return '—';
   return formatDurationSeconds(hours * 60 * 60);
 }

@@ -37,7 +37,7 @@ function AuthLayout({ children, tagline = 'A little progress, every day.' }: { c
         <div className="auth-mobile-brand"><Link to="/" title="Back to home"><BrandLogo /></Link></div>
         <div style={{ marginBottom: 12 }}>
           <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#68728a', fontWeight: 600 }}>
-            <ArrowLeft size={14} /> Back to Home
+            {/* <ArrowLeft size={14} /> Back to Home */}
           </Link>
         </div>
         {children}
