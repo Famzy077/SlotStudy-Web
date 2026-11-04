@@ -625,7 +625,7 @@ export default function LandingPage() {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
             ? 'border-b border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-[#070a13]/90 shadow-[0_4px_20px_-10px_rgb(37_99_235/15%)] backdrop-blur-xl'
-            : 'border-b border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-[#070a13]/80 backdrop-blur-md'
+            : 'border-b border-transparent bg-[#f8faff] dark:bg-[#070a13]'
         }`}
       >
         <div className="mx-auto flex h-[64px] sm:h-[72px] max-w-7xl items-center justify-between px-3.5 sm:px-6 lg:px-8">
@@ -703,22 +703,23 @@ export default function LandingPage() {
         {menuOpen && (
           <>
             <div
-              className="fixed inset-0 top-[64px] z-40 bg-black/40 backdrop-blur-xs md:hidden"
+              className="ls-mobile-menu-backdrop fixed inset-0 top-[64px] z-40 bg-black/40 backdrop-blur-xs md:hidden"
               onClick={() => setMenuOpen(false)}
               aria-hidden="true"
             />
-            <div className="relative z-50 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0b0f19]/95 backdrop-blur-xl px-4 pb-6 pt-3 md:hidden shadow-2xl">
-              {NAV_LINKS.map((link) => (
+            <div className="ls-mobile-menu relative z-50 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0b0f19]/95 backdrop-blur-xl px-4 pb-6 pt-3 md:hidden shadow-2xl">
+              {NAV_LINKS.map((link, index) => (
                 <a
                   key={link.href}
                   href={link.href}
                   onClick={() => setMenuOpen(false)}
-                  className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-[#2563eb] dark:hover:text-blue-400"
+                  style={{ animationDelay: `${index * 45}ms` }}
+                  className="ls-mobile-menu-item block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-[#2563eb] dark:hover:text-blue-400"
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="mt-4 grid gap-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+              <div className="ls-mobile-menu-actions mt-4 grid gap-2 border-t border-slate-200 dark:border-slate-800 pt-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -754,17 +755,17 @@ export default function LandingPage() {
       {/* =========================================================================
           2. HERO SECTION & 3D INTERACTIVE EXPERIENCE
           ========================================================================= */}
-      <section className="relative isolate overflow-hidden pt-[84px] sm:pt-[104px] pb-12 sm:pb-24">
-        <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8">
+      <section className="relative isolate overflow-hidden pt-[134px] sm:pt-[128px] lg:pt-[144px] pb-12 sm:pb-24">
+        <div className="mx-auto grid max-w-7xl min-w-0 items-center gap-8 px-4 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8">
           {/* Left Column: Headlines & Dual CTAs */}
-          <div className="lg:col-span-6 text-left">
+          <div className="min-w-0 lg:col-span-6 text-left">
             <Reveal>
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 dark:border-blue-900 bg-white dark:bg-slate-900 px-3 py-1 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs font-mono font-bold text-[#2563eb] dark:text-blue-400 shadow-sm">
+              <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-blue-200 dark:border-blue-900 bg-white dark:bg-slate-900 px-3 py-1 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs font-mono font-bold text-[#2563eb] dark:text-blue-400 shadow-sm">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
-                <span>AI-POWERED ACADEMIC ACCELERATOR</span>
+                <span className="min-w-0 whitespace-normal leading-tight">AI-POWERED ACADEMIC ACCELERATOR</span>
               </div>
             </Reveal>
 
@@ -788,26 +789,26 @@ export default function LandingPage() {
 
             <Reveal delay={240}>
               {/* Dual Primary Conversion Buttons */}
-              <div className="mt-6 sm:mt-8 flex flex-col gap-3 sm:flex-row items-stretch sm:items-center">
+              <div className="mt-6 sm:mt-8 flex min-w-0 flex-col gap-3 sm:flex-row items-stretch sm:items-center">
                 {/* 1. Web CTA */}
                 <Link
                   to="/register"
-                  className="group inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#2563eb] via-[#1d4ed8] to-[#2563eb] px-6 sm:px-7 py-3.5 text-sm font-extrabold text-white shadow-xl shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:shadow-blue-500/40"
+                  className="group inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2563eb] via-[#1d4ed8] to-[#2563eb] px-3.5 py-3.5 text-[13px] font-extrabold text-white shadow-xl shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:shadow-blue-500/40 sm:w-auto sm:gap-2.5 sm:px-7 sm:text-sm"
                 >
-                  <Laptop size={17} />
-                  <span>Get Started on Web</span>
-                  <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
+                  <Laptop size={17} className="shrink-0" />
+                  <span className="min-w-0">Get Started on Web</span>
+                  <ArrowRight size={15} className="shrink-0 transition-transform group-hover:translate-x-1" />
                 </Link>
 
                 {/* 2. Android APK CTA */}
                 <button
                   type="button"
                   onClick={() => setApkOpen(true)}
-                  className="group inline-flex items-center justify-center gap-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-3.5 text-sm font-bold text-slate-800 dark:text-slate-200 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#10b981] hover:shadow-md"
+                  className="group inline-flex w-full min-w-0 flex-wrap items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-3.5 text-[13px] font-bold text-slate-800 dark:text-slate-200 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#10b981] hover:shadow-md sm:w-auto sm:flex-nowrap sm:gap-2.5 sm:px-5 sm:text-sm"
                 >
-                  <Smartphone size={17} className="text-[#10b981]" />
-                  <span>Download Android App</span>
-                  <span className="rounded bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-800 dark:text-emerald-400">
+                  <Smartphone size={17} className="shrink-0 text-[#10b981]" />
+                  <span className="min-w-0">Download Android App</span>
+                  <span className="whitespace-nowrap rounded bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-800 dark:text-emerald-400">
                     APK v1.0.0
                   </span>
                 </button>
@@ -830,7 +831,7 @@ export default function LandingPage() {
           </div>
 
           {/* Right Column: 3D Scene + Floating Live Student Chips inside Frame */}
-          <div className="lg:col-span-6 relative mt-4 lg:mt-0">
+          <div className="min-w-0 lg:col-span-6 relative mt-4 lg:mt-0">
             <Reveal delay={180}>
               <div className="relative mx-auto max-w-[540px] rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-gradient-to-b from-white/90 via-slate-50/50 to-white/90 dark:from-slate-900/90 dark:via-slate-900/40 dark:to-slate-900/90 p-3 sm:p-5 shadow-xl shadow-blue-500/5 backdrop-blur-sm">
                 {/* 3D Canvas Container */}

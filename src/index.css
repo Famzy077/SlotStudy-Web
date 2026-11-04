@@ -22,7 +22,7 @@
 
 @layer base {
   * { box-sizing: border-box; }
-  body { margin: 0; min-width: 320px; min-height: 100vh; background: #f7f8fc; }
+  body { margin: 0; min-width: 0; min-height: 100vh; background: #f7f8fc; }
   button, input, select, textarea { font: inherit; }
   button, a { -webkit-tap-highlight-color: transparent; }
   button { cursor: pointer; }
@@ -1000,6 +1000,9 @@ html.dark {
 @keyframes ls-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
 @keyframes ls-dash { to { stroke-dashoffset: 0; } }
 @keyframes ls-wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+@keyframes ls-menu-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ls-menu-drop-in { from { opacity: 0; transform: translateY(-8px) scaleY(.98); } to { opacity: 1; transform: translateY(0) scaleY(1); } }
+@keyframes ls-menu-item-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
 
 .ls-float { animation: ls-float 6s ease-in-out infinite; }
 .ls-float-alt { animation: ls-float-alt 7s ease-in-out infinite; }
@@ -1026,10 +1029,15 @@ html.dark {
 .ls-faq-body > div, .ls-accordion-inner { overflow: hidden; }
 .ls-step-line { stroke-dasharray: 600; stroke-dashoffset: 600; }
 .is-visible .ls-step-line { animation: ls-dash 1.6s ease .3s forwards; }
+.ls-mobile-menu-backdrop { animation: ls-menu-backdrop-in .2s ease-out both; }
+.ls-mobile-menu { transform-origin: top; animation: ls-menu-drop-in .28s cubic-bezier(.2,.7,.2,1) both; }
+.ls-mobile-menu-item { animation: ls-menu-item-in .24s cubic-bezier(.2,.7,.2,1) both; }
+.ls-mobile-menu-actions { animation: ls-fade-up .28s cubic-bezier(.2,.7,.2,1) .18s both; }
 
 @media (prefers-reduced-motion: reduce) {
   .ls-reveal { opacity: 1; transform: none; transition: none; }
   .ls-float, .ls-float-alt, .ls-float-slow, .ls-marquee, .ls-gradient-text, .ls-orb, .ls-dot, .ls-beacon::after, .ls-shimmer { animation: none !important; }
   .ls-bar > span, .ls-panel, .ls-pop { animation: none !important; }
+  .ls-mobile-menu-backdrop, .ls-mobile-menu, .ls-mobile-menu-item, .ls-mobile-menu-actions { animation: none !important; }
   .ls-step-line { stroke-dashoffset: 0; }
 }
