@@ -224,9 +224,9 @@ function SlotStudyBrandLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
           <span className="text-[#10b981] dark:text-[#10b981]">Study</span>
           <span className="h-1.5 w-1.5 rounded-full bg-[#f59e0b] ml-0.5 inline-block" />
         </div>
-        <span className="hidden sm:inline-block text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mt-0.5 font-mono">
+        {/* <span className="hidden sm:inline-block text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mt-0.5 font-mono">
           AI Academic Workspace
-        </span>
+        </span> */}
       </div>
     </div>
   );
@@ -236,7 +236,7 @@ function SectionHeading({ eyebrow, title, text }: { eyebrow: string; title: Reac
   return (
     <Reveal className="mx-auto mb-14 max-w-2xl text-center">
       <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/80 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#2563eb] dark:text-blue-400">
-        <Sparkles size={12} className="text-[#2563eb] dark:text-blue-400" />
+        {/* <Sparkles size={12} className="text-[#2563eb] dark:text-blue-400" /> */}
         {eyebrow}
       </span>
       <h2 className="mt-4 font-[Manrope] text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
@@ -759,7 +759,7 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-7xl min-w-0 items-center gap-8 px-4 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8">
           {/* Left Column: Headlines & Dual CTAs */}
           <div className="min-w-0 lg:col-span-6 text-left">
-            <Reveal>
+            {/* <Reveal>
               <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-blue-200 dark:border-blue-900 bg-white dark:bg-slate-900 px-3 py-1 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs font-mono font-bold text-[#2563eb] dark:text-blue-400 shadow-sm">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -767,7 +767,7 @@ export default function LandingPage() {
                 </span>
                 <span className="min-w-0 whitespace-normal leading-tight">AI-POWERED ACADEMIC ACCELERATOR</span>
               </div>
-            </Reveal>
+            </Reveal> */}
 
             <Reveal delay={80}>
               <h1 className="mt-4 sm:mt-5 font-[Manrope] text-[30px] sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08]">
@@ -991,10 +991,6 @@ export default function LandingPage() {
                     </span>
                     <h3 className="font-[Manrope] text-lg font-extrabold text-slate-900 dark:text-white">{feat.title}</h3>
                     <p className="mt-2.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{feat.text}</p>
-                  </div>
-                  <div className="mt-5 pt-4 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-[#2563eb] dark:text-blue-400">
-                    <span>Learn more</span>
-                    <ArrowRight size={13} />
                   </div>
                 </article>
               </Reveal>
@@ -1276,7 +1272,6 @@ export default function LandingPage() {
             <div className="grid lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-6 space-y-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[#2563eb] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 px-3 py-1 rounded-full">
-                  <Sparkles size={12} />
                   Early Access Waitlist
                 </span>
                 <h3 className="font-[Manrope] text-2xl font-extrabold text-slate-900 dark:text-white">
