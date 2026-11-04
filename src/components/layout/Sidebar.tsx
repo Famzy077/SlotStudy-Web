@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
   Activity, Bell, BookOpen, BookOpenCheck, BrainCircuit, ChevronDown, ChevronRight,
-  Compass, House, LogOut, Settings, Sparkles, UserRound, X,
+  Compass, House, LogOut, Settings, Sparkles, UserRound, Users, X,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import BrandLogo from '../common/BrandLogo';
@@ -18,7 +18,8 @@ export const navigationLinks = [
     title: 'Study tools',
     links: [
       { name: 'AI summaries', to: '/ai', icon: Sparkles },
-      { name: 'Study buddy', to: '/study-room', icon: BrainCircuit },
+      { name: 'Study buddy', to: '/study-buddy', icon: Users },
+      { name: 'AI study room', to: '/study-room', icon: BrainCircuit },
       { name: 'Practice quizzes', to: '/quizzes', icon: BookOpenCheck },
     ],
   },
@@ -94,7 +95,8 @@ export function Sidebar({
                   >
                     <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
                     <span>{name}</span>
-                    {name === 'Study buddy' && <span className="nav-new">AI</span>}
+                    {name === 'AI study room' && <span className="nav-new">AI</span>}
+                    {name === 'Study buddy' && <span className="nav-new">NEW</span>}
                   </Link>
                 );
               })}

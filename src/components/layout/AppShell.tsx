@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, BrainCircuit, ChevronRight, Search, Sparkles } from 'lucide-react';
+import { BookOpen, BrainCircuit, ChevronRight, Search, Sparkles, Users } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useClickOutside } from '../../hooks/useClickOutside';
@@ -68,8 +68,10 @@ export function AppShell() {
       ? 'Course space'
       : pathname.startsWith('/summaries/')
       ? 'Study summary'
-      : pathname.startsWith('/study-room')
+      : pathname.startsWith('/study-buddy')
       ? 'Study buddy'
+      : pathname.startsWith('/study-room')
+      ? 'AI study room'
       : pathname.startsWith('/quizzes/')
       ? 'Quiz space'
       : pathname.split('/')[1]?.replaceAll('-', ' ') || 'Dashboard';
@@ -263,11 +265,19 @@ export function AppShell() {
               </button>
               <button
                 onClick={() => {
+                  navigate('/study-buddy');
+                  setSearchOpen(false);
+                }}
+              >
+                <Users size={15} /> Study buddy <ChevronRight size={14} />
+              </button>
+              <button
+                onClick={() => {
                   navigate('/study-room');
                   setSearchOpen(false);
                 }}
               >
-                <BrainCircuit size={15} /> Study buddy <ChevronRight size={14} />
+                <BrainCircuit size={15} /> AI study room <ChevronRight size={14} />
               </button>
             </div>
           </div>

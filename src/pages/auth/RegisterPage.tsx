@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowRight, Gift } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../lib/api';
 import { useAuth, type User } from '../../lib/auth';
 import { AuthLayout, Field } from './AuthLayout';
@@ -9,6 +9,8 @@ type TokenResponse = { user: User; accessToken: string; refreshToken: string };
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get('ref') || undefined;
   const [values, setValues] = useState({
     name: '',
     username: '',
@@ -27,7 +29,8 @@ export function RegisterPage() {
     setError('');
     setBusy(true);
     try {
-      const { data } = await api.post('/auth/register', values);
+      const payload = refCode ? { ...values, referralCode: refCode } : values;
+      const { data } = await api.post('/auth/register', payload);
       const response = unwrap<
         TokenResponse & { otpRequired?: boolean; email?: string }
       >(data);
@@ -54,6 +57,28 @@ export function RegisterPage() {
         <p className="auth-subtitle">
           Create your free account and make studying feel a little lighter.
         </p>
+        {refCode && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 14px',
+              background: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid rgba(34, 197, 94, 0.25)',
+              borderRadius: '10px',
+              marginBottom: '16px',
+              color: '#16a34a',
+              fontSize: '13px',
+              fontWeight: 500,
+            }}
+          >
+            <Gift size={16} />
+            <span>
+              Invited by a buddy! Code: <strong>{refCode}</strong>
+            </span>
+          </div>
+        )}
         <form className="auth-fields" onSubmit={submit}>
           {error && <div className="form-alert">{error}</div>}
           <Field

@@ -7,6 +7,7 @@ export { UploadMaterialPage } from './materials/UploadMaterialPage';
 export { SummaryDetailPage } from './materials/SummaryDetailPage';
 export { MaterialCard } from './materials/MaterialCard';
 export { StudyRoomPage } from './study-room/StudyRoomPage';
+export { StudyBuddyPage } from './study-buddy/StudyBuddyPage';
 export { QuizzesPage } from './quizzes/QuizzesPage';
 export { QuizRunnerPage } from './quizzes/QuizRunnerPage';
 export { QuizResultPage } from './quizzes/QuizResultPage';

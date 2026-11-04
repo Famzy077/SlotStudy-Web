@@ -17,6 +17,7 @@ import {
   MaterialsPage,
   SummaryDetailPage,
   StudyRoomPage,
+  StudyBuddyPage,
   QuizzesPage,
   QuizRunnerPage,
   QuizResultPage,
@@ -56,6 +57,7 @@ export function App() {
             <Route path="/summaries/:id" element={<SummaryDetailPage />} />
             <Route path="/study-room" element={<StudyRoomPage />} />
             <Route path="/study-room/:id" element={<StudyRoomPage />} />
+            <Route path="/study-buddy" element={<StudyBuddyPage />} />
             <Route path="/quizzes" element={<QuizzesPage />} />
             <Route path="/quizzes/:id" element={<QuizRunnerPage />} />
             <Route path="/quizzes/:id/result" element={<QuizResultPage />} />

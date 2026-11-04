@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BrainCircuit, BookOpen, House, Sparkles, UserRound } from 'lucide-react';
+import { BookOpen, House, Sparkles, UserRound, Users } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 
 interface MobileNavProps {
@@ -14,7 +14,7 @@ export function MobileNav({ onItemClick }: MobileNavProps) {
     { name: 'Home', to: '/dashboard', icon: House },
     { name: 'Courses', to: '/courses', icon: BookOpen },
     { name: 'AI', to: '/ai', icon: Sparkles },
-    { name: 'Buddy', to: '/study-room', icon: BrainCircuit },
+    { name: 'Buddy', to: '/study-buddy', icon: Users },
     { name: 'Profile', to: '/profile', icon: UserRound },
   ];
 

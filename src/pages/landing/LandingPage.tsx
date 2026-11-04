@@ -91,9 +91,9 @@ function TelegramIcon({ className = 'w-4 h-4' }: { className?: string }) {
 
 const SOCIAL_LINKS = [
   { name: 'LinkedIn', icon: LinkedInIcon, href: 'https://linkedin.com/company/slotstudy', label: 'SlotStudy on LinkedIn' },
-  { name: 'X', icon: XTwitterIcon, href: 'https://x.com/slotstudy', label: 'SlotStudy on X (Twitter)' },
-  { name: 'Instagram', icon: InstagramIcon, href: 'https://instagram.com/slotstudy', label: 'SlotStudy on Instagram' },
-  { name: 'TikTok', icon: TikTokIcon, href: 'https://tiktok.com/@slotstudy', label: 'SlotStudy on TikTok' },
+  { name: 'X', icon: XTwitterIcon, href: 'https://x.com/slotstudy_ng', label: 'SlotStudy on X (Twitter)' },
+  { name: 'Instagram', icon: InstagramIcon, href: 'https://instagram.com/slot_study', label: 'SlotStudy on Instagram' },
+  { name: 'TikTok', icon: TikTokIcon, href: 'https://tiktok.com/@slot.study', label: 'SlotStudy on TikTok' },
   { name: 'Telegram', icon: TelegramIcon, href: 'https://t.me/slotstudy', label: 'SlotStudy on Telegram' },
 ];
 
@@ -1412,15 +1412,9 @@ export default function LandingPage() {
           <div className="border-t border-slate-100 dark:border-slate-800/80 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-400 dark:text-slate-500">
             <div>© {new Date().getFullYear()} SlotStudy for students</div>
             <div className="flex items-center gap-3">
-              <span>Theme: {theme === 'dark' ? 'Dark Screen' : 'Light Screen'}</span>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-blue-400"
-              >
-                {theme === 'dark' ? <Sun size={12} className="text-amber-400" /> : <Moon size={12} />}
-                <span>Switch to {theme === 'dark' ? 'Light' : 'Dark'}</span>
-              </button>
+              <p className="inline-flex items-center gap-1 px-2.5 py-1 text-slate-500 dark:text-slate-400">
+                All rights reserved
+              </p>
             </div>
           </div>
         </div>
