@@ -277,10 +277,17 @@ kbd { display: inline-flex; align-items: center; gap: 2px; padding: 3px 5px; bor
 .status-pill { position: absolute; right: 12px; top: 15px; padding: 4px 6px; border-radius: 5px; color: #ad8a4d; background: #fff5e3; font-size: 8px; font-weight: 700; letter-spacing: .4px; }
 .status-completed { color: #438669; background: #eaf7f0; }
 .status-failed { color: #b65b60; background: #fff0ef; }
-.material-card > b { max-width: 100%; margin-bottom: 5px; overflow: hidden; color: #3e4a65; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.material-card-title { max-width: 100%; margin-bottom: 5px; overflow: hidden; color: #3e4a65; font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.material-card-title:hover { color: #4667e8; }
 .material-course { color: #929aab; font-size: 9px; }
 .material-card-bottom { width: 100%; margin-top: auto; padding-top: 10px; display: flex; align-items: center; justify-content: space-between; color: #9ba2b0; font-size: 9px; }
 .material-card-bottom > span { display: flex; align-items: center; gap: 4px; }
+.material-card-bottom > .material-card-actions { gap: 7px; }
+.material-open-link, .material-delete-button { width: 34px; height: 34px; padding: 0; border: 0; border-radius: 8px; display: grid; place-items: center; background: transparent; color: #9299aa; }
+.material-open-link:hover { color: #4667e8; background: #f1f3fa; }
+.material-delete-button { color: #a16670; }
+.material-delete-button:hover:not(:disabled) { color: #c2414b; background: #fff0f1; }
+.material-delete-button:disabled { cursor: wait; opacity: .6; }
 .summary-card { min-height: 160px; }
 
 .course-detail-hero { min-height: 155px; padding: 23px; border: 1px solid #e5e9fb; border-radius: 13px; display: flex; align-items: center; justify-content: space-between; gap: 14px; background: linear-gradient(110deg,#f0f3ff,#f8f7ff); }

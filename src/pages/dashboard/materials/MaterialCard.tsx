@@ -1,16 +1,27 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Clock3, FileText } from 'lucide-react';
+import { ArrowRight, Clock3, FileText, Trash2 } from 'lucide-react';
 import type { Material } from '../../../types';
 import { getPath } from '../../../hooks/useApiQuery';
 
-export function MaterialCard({ material }: { material: Material }) {
+interface MaterialCardProps {
+  material: Material;
+  isDeleting?: boolean;
+  onDelete?: (material: Material) => void;
+}
+
+export function MaterialCard({
+  material,
+  isDeleting = false,
+  onDelete,
+}: MaterialCardProps) {
   const name = String(
     material.fileName || material.filename || material.title || 'Untitled material',
   );
   const status = String(material.status || 'UNKNOWN').toUpperCase();
+  const isProcessing = status === 'PROCESSING';
 
   return (
-    <Link to={`/summaries/${material.id}`} className="material-card">
+    <article className="material-card">
       <span
         className={`material-file-icon ${
           name.toLowerCase().endsWith('.pdf') ? 'pdf-icon' : ''
@@ -19,7 +30,9 @@ export function MaterialCard({ material }: { material: Material }) {
         <FileText size={21} />
       </span>
       <span className={`status-pill status-${status.toLowerCase()}`}>{status}</span>
-      <b>{name}</b>
+      <Link to={`/summaries/${material.id}`} className="material-card-title">
+        {name}
+      </Link>
       <span className="material-course">
         {String(getPath(material, 'course.title', 'No course linked'))}
       </span>
@@ -30,8 +43,32 @@ export function MaterialCard({ material }: { material: Material }) {
             ? new Date(String(material.createdAt)).toLocaleDateString()
             : 'Date unavailable'}
         </span>
-        <ArrowRight size={15} />
+        <span className="material-card-actions">
+          <Link
+            to={`/summaries/${material.id}`}
+            className="material-open-link"
+            aria-label={`Open summary for ${name}`}
+          >
+            <ArrowRight size={15} />
+          </Link>
+          {onDelete && (
+            <button
+              className="material-delete-button"
+              type="button"
+              onClick={() => onDelete(material)}
+              disabled={isDeleting || isProcessing}
+              aria-label={`Delete ${name} and its summary`}
+              title={
+                isProcessing
+                  ? 'Wait until processing finishes before deleting'
+                  : 'Delete material and summary'
+              }
+            >
+              {isDeleting ? '…' : <Trash2 size={15} />}
+            </button>
+          )}
+        </span>
       </span>
-    </Link>
+    </article>
   );
 }

@@ -82,6 +82,7 @@ export function StudyBuddyPage() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [cancelConfirmTarget, setCancelConfirmTarget] = useState<{ id: string; name: string } | null>(null);
   const [reportReason, setReportReason] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
@@ -349,6 +350,7 @@ export function StudyBuddyPage() {
         ),
       );
       setOutgoingRequests((prev) => prev.filter((r) => r.user.id !== userId));
+      setCancelConfirmTarget(null);
     } catch (err) {
       console.warn('Cancel request error:', err);
     } finally {
@@ -769,7 +771,7 @@ export function StudyBuddyPage() {
                               </span>
                               <button
                                 disabled={isBusy}
-                                onClick={() => handleCancelFriendRequest(student.id)}
+                                onClick={() => setCancelConfirmTarget({ id: student.id, name: student.name })}
                                 title="Cancel friend request"
                                 className="rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400"
                               >
@@ -828,7 +830,7 @@ export function StudyBuddyPage() {
                             </span>
                             <button
                               disabled={isBusy}
-                              onClick={() => handleCancelFriendRequest(student.id)}
+                              onClick={() => setCancelConfirmTarget({ id: student.id, name: student.name })}
                               className="font-bold text-rose-600 hover:underline dark:text-rose-400"
                             >
                               Cancel Request
@@ -1049,8 +1051,8 @@ export function StudyBuddyPage() {
 
                                 <button
                                   disabled={isCancelling}
-                                  onClick={() => handleCancelFriendRequest(req.user.id)}
-                                  className="shrink-0 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-400"
+                                  onClick={() => setCancelConfirmTarget({ id: req.user.id, name: req.user.name })}
+                                  className="shrink-0 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400"
                                 >
                                   {isCancelling ? 'Cancelling...' : 'Cancel Request'}
                                 </button>
@@ -1573,6 +1575,52 @@ export function StudyBuddyPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────
+          CANCEL FRIEND REQUEST CONFIRMATION MODAL
+          ────────────────────────────────────────────── */}
+      {cancelConfirmTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+                <AlertTriangle size={28} />
+              </div>
+
+              <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-50">
+                Cancel Friend Request?
+              </h3>
+
+              <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                Are you sure you want to cancel the friend request sent to{' '}
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {cancelConfirmTarget.name}
+                </span>
+                ? You can always send a new request later.
+              </p>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                disabled={actioningUserIds.has(cancelConfirmTarget.id)}
+                onClick={() => setCancelConfirmTarget(null)}
+                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                Keep Request
+              </button>
+              <button
+                type="button"
+                disabled={actioningUserIds.has(cancelConfirmTarget.id)}
+                onClick={() => handleCancelFriendRequest(cancelConfirmTarget.id)}
+                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-50"
+              >
+                {actioningUserIds.has(cancelConfirmTarget.id) ? 'Cancelling...' : 'Yes, Cancel'}
+              </button>
+            </div>
           </div>
         </div>
       )}

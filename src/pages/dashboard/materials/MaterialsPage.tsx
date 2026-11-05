@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, FileText, Plus, Sparkles, Upload } from 'lucide-react';
+import api, { getErrorMessage, unwrap } from '../../../lib/api';
 import type { Material } from '../../../types';
 import { list, useApiQuery } from '../../../hooks/useApiQuery';
 import { PageTitle, QueryNotice, LoadingLine, EmptyState } from '../../../components/common';
@@ -8,6 +11,52 @@ import { MaterialCard } from './MaterialCard';
 export function MaterialsPage() {
   const result = useApiQuery<unknown>('materials', '/materials');
   const materials = list<Material>(result.data, 'materials');
+  const queryClient = useQueryClient();
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [actionNotice, setActionNotice] = useState<{
+    message: string;
+    type: 'success' | 'warning' | 'error';
+  } | null>(null);
+
+  async function deleteMaterial(material: Material) {
+    const name = String(
+      material.fileName || material.filename || material.title || 'this material',
+    );
+    if (
+      !window.confirm(
+        `Delete "${name}" and its generated summary? This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setDeletingIds((current) => new Set(current).add(material.id));
+    setActionNotice(null);
+    try {
+      const response = unwrap<{ storageCleanupWarning?: string }>(
+        (await api.delete(`/materials/${material.id}`)).data,
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['materials'] }),
+        queryClient.invalidateQueries({ queryKey: ['summaries'] }),
+        queryClient.invalidateQueries({ queryKey: ['summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['courses'] }),
+      ]);
+      setActionNotice(
+        response.storageCleanupWarning
+          ? { message: response.storageCleanupWarning, type: 'warning' }
+          : { message: `"${name}" and its summary were deleted.`, type: 'success' },
+      );
+    } catch (error) {
+      setActionNotice({ message: getErrorMessage(error), type: 'error' });
+    } finally {
+      setDeletingIds((current) => {
+        const next = new Set(current);
+        next.delete(material.id);
+        return next;
+      });
+    }
+  }
 
   return (
     <div>
@@ -47,12 +96,26 @@ export function MaterialsPage() {
         </div>
       </div>
 
+      {actionNotice && (
+        <div
+          className={actionNotice.type === 'success' ? 'success-alert' : 'form-alert'}
+          role={actionNotice.type === 'error' ? 'alert' : 'status'}
+        >
+          {actionNotice.message}
+        </div>
+      )}
+
       {result.isLoading ? (
         <LoadingLine />
       ) : materials.length ? (
         <div className="materials-grid">
           {materials.map((material) => (
-            <MaterialCard material={material} key={material.id} />
+            <MaterialCard
+              material={material}
+              key={material.id}
+              isDeleting={deletingIds.has(material.id)}
+              onDelete={deleteMaterial}
+            />
           ))}
         </div>
       ) : (
