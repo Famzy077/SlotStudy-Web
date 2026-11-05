@@ -429,7 +429,7 @@ export function StudyBuddyPage() {
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-3xl">
-            Study Buddy Arena 🤝
+            Study Buddy Arena 
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Find coursemates from NOUN, Miva, and other open distance universities. Connect & chat in real time.
@@ -1262,4 +1262,4 @@ export function StudyBuddyPage() {
   );
 }
 
-export default StudyBuddyPage;
+// export default StudyBuddyPage;
