@@ -59,6 +59,7 @@ export function StudyBuddyPage() {
   const [students, setStudents] = useState<StudyBuddyStudent[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSchool, setSelectedSchool] = useState('All Schools');
+  const [discoverStatusFilter, setDiscoverStatusFilter] = useState<'all' | 'pending' | 'available'>('all');
   const [loadingDiscover, setLoadingDiscover] = useState(true);
   const [pendingFriendIds, setPendingFriendIds] = useState<Set<string>>(new Set());
   const [actioningUserIds, setActioningUserIds] = useState<Set<string>>(new Set());
@@ -98,12 +99,66 @@ export function StudyBuddyPage() {
     try {
       setLoadingDiscover(true);
       const schoolParam = selectedSchool === 'All Schools' ? 'all' : selectedSchool;
-      const data = await studyBuddyService.discover({
-        school: schoolParam,
-        q: searchQuery.trim() || undefined,
-        limit: 30,
+      const [data, requestsData] = await Promise.all([
+        studyBuddyService.discover({
+          school: schoolParam,
+          q: searchQuery.trim() || undefined,
+          limit: 30,
+        }),
+        studyBuddyService.getRequests().catch(() => null),
+      ]);
+
+      const outgoingMap = new Map<string, { friendshipId: string; user: StudyBuddyStudent }>();
+      const incomingMap = new Map<string, { friendshipId: string; user: StudyBuddyStudent }>();
+
+      if (requestsData) {
+        setIncomingRequests(requestsData.incoming);
+        setOutgoingRequests(requestsData.outgoing);
+        for (const req of requestsData.outgoing || []) {
+          outgoingMap.set(req.user.id, { friendshipId: req.id, user: req.user });
+        }
+        for (const req of requestsData.incoming || []) {
+          incomingMap.set(req.user.id, { friendshipId: req.id, user: req.user });
+        }
+      }
+
+      const enriched = data.users.map((u) => {
+        if (outgoingMap.has(u.id)) {
+          return {
+            ...u,
+            friendshipStatus: 'PENDING_SENT' as const,
+            friendshipId: outgoingMap.get(u.id)!.friendshipId,
+          };
+        }
+        if (incomingMap.has(u.id)) {
+          return {
+            ...u,
+            friendshipStatus: 'PENDING_RECEIVED' as const,
+            friendshipId: incomingMap.get(u.id)!.friendshipId,
+          };
+        }
+        return u;
       });
-      setStudents(data.users);
+
+      const existingIds = new Set(enriched.map((u) => u.id));
+      const missingPending: StudyBuddyStudent[] = [];
+      for (const [uid, entry] of outgoingMap.entries()) {
+        if (!existingIds.has(uid)) {
+          const matchesQuery =
+            !searchQuery.trim() ||
+            entry.user.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+            (entry.user.bio || '').toLowerCase().includes(searchQuery.trim().toLowerCase());
+          if (matchesQuery) {
+            missingPending.push({
+              ...entry.user,
+              friendshipStatus: 'PENDING_SENT',
+              friendshipId: entry.friendshipId,
+            });
+          }
+        }
+      }
+
+      setStudents([...missingPending, ...enriched]);
     } catch (err) {
       console.error('Discover error:', err);
     } finally {
@@ -464,20 +519,20 @@ export function StudyBuddyPage() {
   return (
     <div className="study-buddy-page mx-auto max-w-7xl py-6">
       {/* Top Banner & Header */}
-      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
+      <div className="mb-6 flex flex-col justify-between gap-3 md:flex-row md:items-center">
+        <div className="min-w-0 md:min-w-[55%]">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-3xl">
-            Study Buddy Arena 
+            Study Buddy
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Find coursemates from NOUN, Miva, and other open distance universities. Connect & chat in real time.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex w-full flex-wrap items-center gap-2.5 md:w-auto md:min-w-[40%] md:flex-nowrap">
           <button
             onClick={openInviteModal}
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-300"
+            className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-300 md:flex-initial"
           >
             <Gift size={16} />
             <span>Invite Friend</span>
@@ -485,7 +540,7 @@ export function StudyBuddyPage() {
 
           <button
             onClick={openSettingsModal}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+            className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 md:flex-initial"
           >
             <Settings2 size={16} />
             <span>Settings</span>
@@ -542,168 +597,253 @@ export function StudyBuddyPage() {
       {/* ──────────────────────────────────────────────
           TAB 1: DISCOVER
           ────────────────────────────────────────────── */}
-      {activeTab === 'discover' && (
-        <div className="space-y-6">
-          {/* Filters Bar */}
-          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:flex-row md:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
-              <input
-                type="text"
-                placeholder="Search by student name or bio..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
-              />
-            </div>
+      {activeTab === 'discover' && (() => {
+        const pendingCount = students.filter(
+          (s) =>
+            s.friendshipStatus === 'PENDING_SENT' ||
+            s.friendshipStatus === 'PENDING_RECEIVED' ||
+            pendingFriendIds.has(s.id),
+        ).length;
+        const availableCount = students.length - pendingCount;
+        const filteredStudents = students.filter((s) => {
+          const isPending =
+            s.friendshipStatus === 'PENDING_SENT' ||
+            s.friendshipStatus === 'PENDING_RECEIVED' ||
+            pendingFriendIds.has(s.id);
+          if (discoverStatusFilter === 'pending') return isPending;
+          if (discoverStatusFilter === 'available') return !isPending;
+          return true;
+        });
 
-            <div className="flex w-full min-w-0 items-center gap-2 md:w-auto">
-              <School size={16} className="text-slate-400" />
-              <select
-                aria-label="Filter by institution"
-                value={selectedSchool}
-                onChange={(e) => setSelectedSchool(e.target.value)}
-                className="w-full min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:w-auto md:flex-initial"
-              >
-                {POPULAR_SCHOOLS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+        return (
+          <div className="space-y-5">
+            {/* Filters Bar */}
+            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
+                  <input
+                    type="text"
+                    placeholder="Search by student name or bio..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
+                  />
+                </div>
 
-          {/* Student Grid */}
-          {loadingDiscover ? (
-            <div className="py-20 text-center text-sm text-slate-500">
-              Finding coursemates near you...
-            </div>
-          ) : students.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
-              <Users size={36} className="mx-auto text-slate-400" />
-              <h3 className="mt-3 text-base font-bold text-slate-800 dark:text-slate-100">
-                No coursemates found
-              </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Try selecting "All Schools" or invite your classmates with your referral link!
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {students.map((student) => {
-                const isOnline = isUserOnline(student.id);
-                const isPendingSent =
-                  student.friendshipStatus === 'PENDING_SENT' ||
-                  pendingFriendIds.has(student.id);
-                const isPendingReceived =
-                  student.friendshipStatus === 'PENDING_RECEIVED';
-                const isBusy = actioningUserIds.has(student.id);
-
-                return (
-                  <div
-                    key={student.id}
-                    className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                <div className="flex w-full min-w-0 items-center gap-2 md:w-auto">
+                  <School size={16} className="text-slate-400" />
+                  <select
+                    aria-label="Filter by institution"
+                    value={selectedSchool}
+                    onChange={(e) => setSelectedSchool(e.target.value)}
+                    className="w-full min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:w-auto md:flex-initial"
                   >
-                    <div>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 flex-1 items-center gap-3">
-                          <div className="relative">
-                            {student.avatarUrl ? (
-                              <img
-                                src={student.avatarUrl}
-                                alt={student.name}
-                                className="h-12 w-12 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
-                                {student.name.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            {isOnline && (
-                              <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
-                            )}
+                    {POPULAR_SCHOOLS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Status Filter Pills */}
+              <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Status:
+                </span>
+                <button
+                  onClick={() => setDiscoverStatusFilter('all')}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                    discoverStatusFilter === 'all'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                  }`}
+                >
+                  All ({students.length})
+                </button>
+                <button
+                  onClick={() => setDiscoverStatusFilter('pending')}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                    discoverStatusFilter === 'pending'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400'
+                  }`}
+                >
+                  <Clock size={12} />
+                  <span>Pending ({pendingCount})</span>
+                </button>
+                <button
+                  onClick={() => setDiscoverStatusFilter('available')}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                    discoverStatusFilter === 'available'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                  }`}
+                >
+                  <UserPlus size={12} />
+                  <span>Available ({availableCount})</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Student Grid */}
+            {loadingDiscover ? (
+              <div className="py-20 text-center text-sm text-slate-500">
+                Finding coursemates near you...
+              </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
+                <Users size={36} className="mx-auto text-slate-400" />
+                <h3 className="mt-3 text-base font-bold text-slate-800 dark:text-slate-100">
+                  {discoverStatusFilter === 'pending'
+                    ? 'No pending friend requests'
+                    : 'No coursemates found'}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {discoverStatusFilter === 'pending'
+                    ? "You haven't sent any pending friend requests yet. Switch to All to find study buddies!"
+                    : 'Try selecting "All Schools" or invite your classmates with your referral link!'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredStudents.map((student) => {
+                  const isOnline = isUserOnline(student.id);
+                  const isPendingSent =
+                    student.friendshipStatus === 'PENDING_SENT' ||
+                    pendingFriendIds.has(student.id);
+                  const isPendingReceived =
+                    student.friendshipStatus === 'PENDING_RECEIVED';
+                  const isBusy = actioningUserIds.has(student.id);
+
+                  return (
+                    <div
+                      key={student.id}
+                      className={`flex flex-col justify-between rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md dark:bg-slate-900 ${
+                        isPendingSent
+                          ? 'border-amber-200 dark:border-amber-900/50'
+                          : 'border-slate-200 dark:border-slate-800'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 flex-1 items-center gap-3">
+                            <div className="relative">
+                              {student.avatarUrl ? (
+                                <img
+                                  src={student.avatarUrl}
+                                  alt={student.name}
+                                  className="h-12 w-12 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
+                                  {student.name.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              {isOnline && (
+                                <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <h4 className="truncate font-bold text-slate-900 dark:text-slate-50">
+                                {student.name}
+                              </h4>
+                              {student.school && (
+                                <div className="flex items-center gap-1 text-xs text-slate-500">
+                                  <School size={12} />
+                                  <span className="min-w-0 truncate">{student.school}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="min-w-0 flex-1">
-                            <h4 className="truncate font-bold text-slate-900 dark:text-slate-50">
-                              {student.name}
-                            </h4>
-                            {student.school && (
-                              <div className="flex items-center gap-1 text-xs text-slate-500">
-                                <School size={12} />
-                                <span className="min-w-0 truncate">{student.school}</span>
-                              </div>
-                            )}
-                          </div>
+                          {/* Friend Action Button */}
+                          {isPendingSent ? (
+                            <div className="flex shrink-0 items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1 rounded-xl bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                                <Clock size={12} />
+                                <span>Pending</span>
+                              </span>
+                              <button
+                                disabled={isBusy}
+                                onClick={() => handleCancelFriendRequest(student.id)}
+                                title="Cancel friend request"
+                                className="rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400"
+                              >
+                                {isBusy ? '...' : 'Cancel'}
+                              </button>
+                            </div>
+                          ) : isPendingReceived ? (
+                            <button
+                              onClick={() => {
+                                setRequestSegment('incoming');
+                                setActiveTab('requests');
+                              }}
+                              className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                            >
+                              <UserCheck size={13} />
+                              <span>Respond</span>
+                            </button>
+                          ) : (
+                            <button
+                              disabled={isBusy}
+                              onClick={() => handleSendFriendRequest(student.id)}
+                              className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                              <UserPlus size={13} />
+                              <span>{isBusy ? 'Sending...' : 'Add'}</span>
+                            </button>
+                          )}
                         </div>
 
-                        {/* Friend Action Button */}
-                        {isPendingSent ? (
-                          <div className="flex shrink-0 items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1 rounded-xl bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                              <Clock size={12} />
-                              <span>Pending</span>
+                        {student.bio && (
+                          <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                            {student.bio}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        {student.courses && student.courses.length > 0 && (
+                          <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3 dark:border-slate-800">
+                            {student.courses.slice(0, 3).map((c, i) => (
+                              <span
+                                key={i}
+                                className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                              >
+                                <BookOpen size={11} />
+                                <span>{c}</span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {isPendingSent && (
+                          <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-amber-100 bg-amber-50/60 px-3 py-2 text-[11px] dark:border-amber-900/40 dark:bg-amber-950/20">
+                            <span className="font-medium text-amber-800 dark:text-amber-300">
+                              Request sent • Waiting for approval
                             </span>
                             <button
                               disabled={isBusy}
                               onClick={() => handleCancelFriendRequest(student.id)}
-                              title="Cancel friend request"
-                              className="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-rose-950/30 dark:hover:text-rose-400"
+                              className="font-bold text-rose-600 hover:underline dark:text-rose-400"
                             >
-                              Cancel
+                              Cancel Request
                             </button>
                           </div>
-                        ) : isPendingReceived ? (
-                          <button
-                            onClick={() => {
-                              setRequestSegment('incoming');
-                              setActiveTab('requests');
-                            }}
-                            className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
-                          >
-                            <UserCheck size={13} />
-                            <span>Respond</span>
-                          </button>
-                        ) : (
-                          <button
-                            disabled={isBusy}
-                            onClick={() => handleSendFriendRequest(student.id)}
-                            className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
-                          >
-                            <UserPlus size={13} />
-                            <span>{isBusy ? 'Sending...' : 'Add'}</span>
-                          </button>
                         )}
                       </div>
-
-                      {student.bio && (
-                        <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-600 dark:text-slate-300">
-                          {student.bio}
-                        </p>
-                      )}
                     </div>
-
-                    {student.courses && student.courses.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3 dark:border-slate-800">
-                        {student.courses.slice(0, 3).map((c, i) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                          >
-                            <BookOpen size={11} />
-                            <span>{c}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ──────────────────────────────────────────────
           TAB 2: REQUESTS

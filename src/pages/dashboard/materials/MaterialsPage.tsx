@@ -35,7 +35,7 @@ export function MaterialsPage() {
           </p>
         </div>
         <Link className="button button-light" to="/study-room">
-          Open study buddy <ArrowRight size={15} />
+          Open AI study room <ArrowRight size={15} />
         </Link>
         <span className="ai-hero-star">✦</span>
       </div>

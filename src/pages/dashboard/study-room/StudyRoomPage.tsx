@@ -454,7 +454,7 @@ export function StudyRoomPage() {
         <header className="chat-topbar">
           <div>
             <span className="online-indicator" />
-            <b>Study buddy</b>
+            <b>Study Room</b>
             <span className="chat-topbar-divider">·</span>
             <small>Grounded in your notes</small>
           </div>
@@ -507,7 +507,7 @@ export function StudyRoomPage() {
                   <span className="message-name">
                     {String(message.role).toLowerCase() === 'user'
                       ? 'You'
-                      : 'Study buddy'}
+                      : 'SlotStudy Tutor'}
                   </span>
                   <div className="markdown-content">
                     <MarkdownContent>{String(message.content || '')}</MarkdownContent>
