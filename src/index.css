@@ -859,7 +859,7 @@ html.dark {
   .menu-button, .mobile-close { display: grid; }
   .mobile-close { display: grid; }
   .topbar { height: 64px; }
-  .mobile-nav { height: 61px; padding: 5px 8px calc(5px + env(safe-area-inset-bottom)); position: fixed; z-index: 16; inset: auto 0 0; border-top: 1px solid #e9ebf1; display: flex; justify-content: space-around; background: rgb(255 255 255 / 97%); backdrop-filter: blur(10px); }
+  .mobile-nav { height: 61px; padding: 5px 5px calc(15px + env(safe-area-inset-bottom)); position: fixed; z-index: 16; inset: auto 0 0; border-top: 1px solid #e9ebf1; display: flex; justify-content: space-around; background: rgb(255 255 255 / 97%); backdrop-filter: blur(10px); }
   .mobile-nav a { min-width: 53px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #959daf; font-size: 8px; }
   .mobile-nav .mobile-nav-active { color: #566bd7; }
   .app-footer { padding-bottom: 78px; }
@@ -868,6 +868,7 @@ html.dark {
   .auth-page { grid-template-columns: minmax(300px,.8fr) minmax(400px,1.2fr); }
   .auth-art { padding: 28px; }
   .summary-layout { grid-template-columns: minmax(0,1fr) 220px; gap: 16px; }
+  .study-buddy-page { min-width: 0; padding-bottom: calc(77px + env(safe-area-inset-bottom)); }
 }
 @media (max-width: 650px) {
   .topbar { height: 58px; padding: 0 13px; }
@@ -961,6 +962,7 @@ html.dark {
   .profile-details { grid-template-columns: 1fr 1fr; }
   .support-card { flex-wrap: wrap; }
   .support-card .button { margin-left: 44px; }
+  .study-buddy-chat { height: calc(100dvh - 190px); min-height: 300px; max-height: 720px; }
   .auth-page { min-height: 100vh; min-height: 100svh; position: relative; display: block; overflow: hidden; background: #05070c; }
   .auth-art { min-height: 100vh; min-height: 100svh; padding: 24px 20px; position: absolute; inset: 0; z-index: 0; justify-content: flex-start; background: linear-gradient(180deg,rgb(5 8 15 / 43%) 0%,rgb(5 8 15 / 30%) 28%,rgb(5 8 15 / 84%) 64%,#05070c 100%),url("/images/study-space.jpg") center 34% / cover no-repeat; }
   .auth-art-top { align-items: flex-start; }

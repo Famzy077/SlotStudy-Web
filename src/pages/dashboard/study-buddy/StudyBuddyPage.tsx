@@ -66,7 +66,7 @@ export function StudyBuddyPage() {
   // Requests state
   const [incomingRequests, setIncomingRequests] = useState<FriendRequestItem[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<FriendRequestItem[]>([]);
-  const [requestSegment, setRequestSegment] = useState<'incoming' | 'outgoing'>('incoming');
+  const [requestSegment, setRequestSegment] = useState<'all' | 'incoming' | 'outgoing'>('all');
   const [loadingRequests, setLoadingRequests] = useState(false);
 
   // Chats state
@@ -132,6 +132,10 @@ export function StudyBuddyPage() {
       setLoadingRequests(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
   useEffect(() => {
     if (activeTab === 'requests') {
@@ -258,8 +262,40 @@ export function StudyBuddyPage() {
       setActioningUserIds((prev) => new Set(prev).add(userId));
       await studyBuddyService.sendFriendRequest(userId);
       setPendingFriendIds((prev) => new Set(prev).add(userId));
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === userId ? { ...s, friendshipStatus: 'PENDING_SENT' } : s,
+        ),
+      );
+      fetchRequests();
     } catch (err) {
       console.warn('Friend request error:', err);
+    } finally {
+      setActioningUserIds((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+    }
+  };
+
+  const handleCancelFriendRequest = async (userId: string) => {
+    try {
+      setActioningUserIds((prev) => new Set(prev).add(userId));
+      await studyBuddyService.unfriend(userId);
+      setPendingFriendIds((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === userId ? { ...s, friendshipStatus: 'NONE', friendshipId: null } : s,
+        ),
+      );
+      setOutgoingRequests((prev) => prev.filter((r) => r.user.id !== userId));
+    } catch (err) {
+      console.warn('Cancel request error:', err);
     } finally {
       setActioningUserIds((prev) => {
         const next = new Set(prev);
@@ -273,6 +309,7 @@ export function StudyBuddyPage() {
     try {
       await studyBuddyService.acceptFriendRequest(id);
       setIncomingRequests((prev) => prev.filter((r) => r.id !== id));
+      fetchDiscover();
       setActiveTab('chats');
       fetchConversations();
     } catch (err) {
@@ -284,6 +321,7 @@ export function StudyBuddyPage() {
     try {
       await studyBuddyService.declineFriendRequest(id);
       setIncomingRequests((prev) => prev.filter((r) => r.id !== id));
+      fetchDiscover();
     } catch (err) {
       console.warn('Decline error:', err);
     }
@@ -424,7 +462,7 @@ export function StudyBuddyPage() {
   };
 
   return (
-    <div className="study-buddy-page mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div className="study-buddy-page mx-auto max-w-7xl py-6">
       {/* Top Banner & Header */}
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
@@ -436,7 +474,7 @@ export function StudyBuddyPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={openInviteModal}
             className="inline-flex items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-300"
@@ -456,46 +494,48 @@ export function StudyBuddyPage() {
       </div>
 
       {/* 3 Main Navigation Tabs */}
-      <div className="mb-6 flex border-b border-slate-200 dark:border-slate-800">
+      <div className="mb-6 flex w-full border-b border-slate-200 dark:border-slate-800">
         <button
           onClick={() => setActiveTab('discover')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition ${
+          className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-3 text-xs font-semibold transition sm:gap-2 sm:px-5 sm:text-sm ${
             activeTab === 'discover'
               ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
           }`}
         >
-          <Users size={17} />
-          <span>Discover Coursemates</span>
+          <Users size={16} className="shrink-0 sm:h-[17px] sm:w-[17px]" />
+          <span className="sm:hidden">Discover</span>
+          <span className="hidden sm:inline">Discover Coursemates</span>
         </button>
 
         <button
           onClick={() => setActiveTab('requests')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition ${
+          className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-3 text-xs font-semibold transition sm:gap-2 sm:px-5 sm:text-sm ${
             activeTab === 'requests'
               ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
           }`}
         >
-          <UserCheck size={17} />
+          <UserCheck size={16} className="shrink-0 sm:h-[17px] sm:w-[17px]" />
           <span>Requests</span>
-          {incomingRequests.length > 0 && (
+          {incomingRequests.length + outgoingRequests.length > 0 && (
             <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-bold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
-              {incomingRequests.length}
+              {incomingRequests.length + outgoingRequests.length}
             </span>
           )}
         </button>
 
         <button
           onClick={() => setActiveTab('chats')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition ${
+          className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-3 text-xs font-semibold transition sm:gap-2 sm:px-5 sm:text-sm ${
             activeTab === 'chats'
               ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
           }`}
         >
-          <MessageSquare size={17} />
-          <span>Active Chats</span>
+          <MessageSquare size={16} className="shrink-0 sm:h-[17px] sm:w-[17px]" />
+          <span className="sm:hidden">Chats</span>
+          <span className="hidden sm:inline">Active Chats</span>
         </button>
       </div>
 
@@ -517,13 +557,13 @@ export function StudyBuddyPage() {
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex w-full min-w-0 items-center gap-2 md:w-auto">
               <School size={16} className="text-slate-400" />
               <select
                 aria-label="Filter by institution"
                 value={selectedSchool}
                 onChange={(e) => setSelectedSchool(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="w-full min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 md:w-auto md:flex-initial"
               >
                 {POPULAR_SCHOOLS.map((s) => (
                   <option key={s} value={s}>
@@ -553,7 +593,11 @@ export function StudyBuddyPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {students.map((student) => {
                 const isOnline = isUserOnline(student.id);
-                const isPending = pendingFriendIds.has(student.id);
+                const isPendingSent =
+                  student.friendshipStatus === 'PENDING_SENT' ||
+                  pendingFriendIds.has(student.id);
+                const isPendingReceived =
+                  student.friendshipStatus === 'PENDING_RECEIVED';
                 const isBusy = actioningUserIds.has(student.id);
 
                 return (
@@ -563,7 +607,7 @@ export function StudyBuddyPage() {
                   >
                     <div>
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
                           <div className="relative">
                             {student.avatarUrl ? (
                               <img
@@ -581,41 +625,56 @@ export function StudyBuddyPage() {
                             )}
                           </div>
 
-                          <div>
-                            <h4 className="font-bold text-slate-900 dark:text-slate-50">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="truncate font-bold text-slate-900 dark:text-slate-50">
                               {student.name}
                             </h4>
                             {student.school && (
                               <div className="flex items-center gap-1 text-xs text-slate-500">
                                 <School size={12} />
-                                <span className="line-clamp-1">{student.school}</span>
+                                <span className="min-w-0 truncate">{student.school}</span>
                               </div>
                             )}
                           </div>
                         </div>
 
-                        {/* Add Friend Button */}
-                        <button
-                          disabled={isPending || isBusy}
-                          onClick={() => handleSendFriendRequest(student.id)}
-                          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                            isPending
-                              ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
-                              : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                          }`}
-                        >
-                          {isPending ? (
-                            <>
-                              <Clock size={13} />
+                        {/* Friend Action Button */}
+                        {isPendingSent ? (
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1 rounded-xl bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                              <Clock size={12} />
                               <span>Pending</span>
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus size={13} />
-                              <span>Add</span>
-                            </>
-                          )}
-                        </button>
+                            </span>
+                            <button
+                              disabled={isBusy}
+                              onClick={() => handleCancelFriendRequest(student.id)}
+                              title="Cancel friend request"
+                              className="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-rose-950/30 dark:hover:text-rose-400"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : isPendingReceived ? (
+                          <button
+                            onClick={() => {
+                              setRequestSegment('incoming');
+                              setActiveTab('requests');
+                            }}
+                            className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                          >
+                            <UserCheck size={13} />
+                            <span>Respond</span>
+                          </button>
+                        ) : (
+                          <button
+                            disabled={isBusy}
+                            onClick={() => handleSendFriendRequest(student.id)}
+                            className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                          >
+                            <UserPlus size={13} />
+                            <span>{isBusy ? 'Sending...' : 'Add'}</span>
+                          </button>
+                        )}
                       </div>
 
                       {student.bio && (
@@ -651,120 +710,239 @@ export function StudyBuddyPage() {
           ────────────────────────────────────────────── */}
       {activeTab === 'requests' && (
         <div className="space-y-6">
-          <div className="flex gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 max-w-sm">
-            <button
-              onClick={() => setRequestSegment('incoming')}
-              className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
-                requestSegment === 'incoming'
-                  ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-900 dark:text-indigo-400'
-                  : 'text-slate-500'
-              }`}
-            >
-              Received ({incomingRequests.length})
-            </button>
-            <button
-              onClick={() => setRequestSegment('outgoing')}
-              className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
-                requestSegment === 'outgoing'
-                  ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-900 dark:text-indigo-400'
-                  : 'text-slate-500'
-              }`}
-            >
-              Sent ({outgoingRequests.length})
-            </button>
+          {/* Segment Filter Pills */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-1.5 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              <button
+                onClick={() => setRequestSegment('all')}
+                className={`rounded-lg px-3.5 py-2 text-xs font-bold transition ${
+                  requestSegment === 'all'
+                    ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-900 dark:text-indigo-400'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                }`}
+              >
+                All Pending ({incomingRequests.length + outgoingRequests.length})
+              </button>
+              <button
+                onClick={() => setRequestSegment('incoming')}
+                className={`rounded-lg px-3.5 py-2 text-xs font-bold transition ${
+                  requestSegment === 'incoming'
+                    ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-900 dark:text-indigo-400'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                }`}
+              >
+                Received ({incomingRequests.length})
+              </button>
+              <button
+                onClick={() => setRequestSegment('outgoing')}
+                className={`rounded-lg px-3.5 py-2 text-xs font-bold transition ${
+                  requestSegment === 'outgoing'
+                    ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-900 dark:text-indigo-400'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                }`}
+              >
+                Sent ({outgoingRequests.length})
+              </button>
+            </div>
           </div>
 
           {loadingRequests ? (
             <div className="py-20 text-center text-sm text-slate-500">Loading requests...</div>
-          ) : requestSegment === 'incoming' ? (
-            incomingRequests.length === 0 ? (
-              <div className="py-16 text-center text-sm text-slate-500">
-                No friend requests received yet.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {incomingRequests.map((req) => (
-                  <div
-                    key={req.id}
-                    className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-                  >
-                    <div className="flex items-center gap-3">
-                      {req.user.avatarUrl ? (
-                        <img
-                          src={req.user.avatarUrl}
-                          alt={req.user.name}
-                          className="h-11 w-11 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700">
-                          {req.user.name.charAt(0)}
-                        </div>
-                      )}
-                      <div>
-                        <h4 className="font-bold text-slate-900 dark:text-slate-50">
-                          {req.user.name}
-                        </h4>
-                        <p className="text-xs text-slate-500">{req.user.school || 'Coursemate'}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleAcceptRequest(req.id)}
-                        className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => handleDeclineRequest(req.id)}
-                        className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
-                      >
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : outgoingRequests.length === 0 ? (
-            <div className="py-16 text-center text-sm text-slate-500">
-              No outgoing pending requests.
-            </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {outgoingRequests.map((req) => (
-                <div
-                  key={req.id}
-                  className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-                >
-                  <div className="flex items-center gap-3">
-                    {req.user.avatarUrl ? (
-                      <img
-                        src={req.user.avatarUrl}
-                        alt={req.user.name}
-                        className="h-11 w-11 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700">
-                        {req.user.name.charAt(0)}
-                      </div>
-                    )}
-                    <div>
-                      <h4 className="font-bold text-slate-900 dark:text-slate-50">
-                        {req.user.name}
-                      </h4>
-                      <p className="text-xs text-amber-600">Waiting for response</p>
-                    </div>
+            <div className="space-y-8">
+              {/* RECEIVED REQUESTS SECTION */}
+              {(requestSegment === 'all' || requestSegment === 'incoming') && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                      Received Friend Requests ({incomingRequests.length})
+                    </h3>
                   </div>
 
-                  <button
-                    onClick={() => studyBuddyService.unfriend(req.user.id).then(fetchRequests)}
-                    className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
-                  >
-                    Cancel
-                  </button>
+                  {incomingRequests.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 py-10 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/40">
+                      No incoming friend requests right now.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {incomingRequests.map((req) => {
+                        const isOnline = isUserOnline(req.user.id);
+                        return (
+                          <div
+                            key={req.id}
+                            className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                          >
+                            <div>
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex min-w-0 items-center gap-3">
+                                  <div className="relative shrink-0">
+                                    {req.user.avatarUrl ? (
+                                      <img
+                                        src={req.user.avatarUrl}
+                                        alt={req.user.name}
+                                        className="h-12 w-12 rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
+                                        {req.user.name.charAt(0).toUpperCase()}
+                                      </div>
+                                    )}
+                                    {isOnline && (
+                                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <h4 className="truncate font-bold text-slate-900 dark:text-slate-50">
+                                      {req.user.name}
+                                    </h4>
+                                    <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                                      <School size={12} className="shrink-0" />
+                                      <span className="truncate">
+                                        {req.user.school || 'Coursemate'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex shrink-0 items-center gap-2">
+                                  <button
+                                    onClick={() => handleAcceptRequest(req.id)}
+                                    className="rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeclineRequest(req.id)}
+                                    className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                  >
+                                    Decline
+                                  </button>
+                                </div>
+                              </div>
+
+                              {req.user.bio && (
+                                <p className="mt-3 line-clamp-2 text-xs text-slate-600 dark:text-slate-300">
+                                  {req.user.bio}
+                                </p>
+                              )}
+                            </div>
+
+                            {req.user.courses && req.user.courses.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2.5 dark:border-slate-800">
+                                {req.user.courses.slice(0, 3).map((c, i) => (
+                                  <span
+                                    key={i}
+                                    className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                  >
+                                    <BookOpen size={10} />
+                                    <span>{c}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              ))}
+              )}
+
+              {/* SENT (OUTGOING PENDING) REQUESTS SECTION */}
+              {(requestSegment === 'all' || requestSegment === 'outgoing') && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                      People You Sent Requests To — Pending ({outgoingRequests.length})
+                    </h3>
+                  </div>
+
+                  {outgoingRequests.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 py-10 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/40">
+                      You have no outgoing pending friend requests.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {outgoingRequests.map((req) => {
+                        const isOnline = isUserOnline(req.user.id);
+                        const isCancelling = actioningUserIds.has(req.user.id);
+                        return (
+                          <div
+                            key={req.id}
+                            className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                          >
+                            <div>
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex min-w-0 items-center gap-3">
+                                  <div className="relative shrink-0">
+                                    {req.user.avatarUrl ? (
+                                      <img
+                                        src={req.user.avatarUrl}
+                                        alt={req.user.name}
+                                        className="h-12 w-12 rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                                        {req.user.name.charAt(0).toUpperCase()}
+                                      </div>
+                                    )}
+                                    {isOnline && (
+                                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <h4 className="truncate font-bold text-slate-900 dark:text-slate-50">
+                                      {req.user.name}
+                                    </h4>
+                                    {req.user.school && (
+                                      <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                                        <School size={12} className="shrink-0" />
+                                        <span className="truncate">{req.user.school}</span>
+                                      </div>
+                                    )}
+                                    <div className="mt-1 inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                                      <Clock size={11} />
+                                      <span>Pending approval</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <button
+                                  disabled={isCancelling}
+                                  onClick={() => handleCancelFriendRequest(req.user.id)}
+                                  className="shrink-0 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-400"
+                                >
+                                  {isCancelling ? 'Cancelling...' : 'Cancel Request'}
+                                </button>
+                              </div>
+
+                              {req.user.bio && (
+                                <p className="mt-3 line-clamp-2 text-xs text-slate-600 dark:text-slate-300">
+                                  {req.user.bio}
+                                </p>
+                              )}
+                            </div>
+
+                            {req.user.courses && req.user.courses.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2.5 dark:border-slate-800">
+                                {req.user.courses.slice(0, 3).map((c, i) => (
+                                  <span
+                                    key={i}
+                                    className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                  >
+                                    <BookOpen size={10} />
+                                    <span>{c}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -774,10 +952,10 @@ export function StudyBuddyPage() {
           TAB 3: TWO-PANE CHAT LAYOUT
           ────────────────────────────────────────────── */}
       {activeTab === 'chats' && (
-        <div className="flex h-[720px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div         className="study-buddy-chat flex h-[720px] min-h-0 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           {/* Left Pane: Conversations List */}
           <div
-            className={`w-full border-r border-slate-200 dark:border-slate-800 md:w-80 md:flex-shrink-0 ${
+            className={`flex w-full flex-col border-r border-slate-200 dark:border-slate-800 md:w-80 md:flex-shrink-0 ${
               activeConversation ? 'hidden md:block' : 'block'
             }`}
           >
@@ -785,7 +963,7 @@ export function StudyBuddyPage() {
               <h3 className="font-bold text-slate-900 dark:text-slate-50">Conversations</h3>
             </div>
 
-            <div className="h-[650px] overflow-y-auto p-2">
+            <div className="min-h-0 flex-1 overflow-y-auto p-2">
               {loadingChats ? (
                 <div className="p-8 text-center text-xs text-slate-500">Loading chats...</div>
               ) : conversations.length === 0 ? (
@@ -957,7 +1135,7 @@ export function StudyBuddyPage() {
                 </div>
 
                 {/* Messages Body */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
                   {loadingMessages ? (
                     <div className="py-20 text-center text-xs text-slate-500">
                       Loading conversation...
@@ -985,7 +1163,7 @@ export function StudyBuddyPage() {
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50 rounded-bl-none'
                             }`}
                           >
-                            <p className="leading-relaxed whitespace-pre-wrap">{m.text}</p>
+                            <p className="break-words leading-relaxed whitespace-pre-wrap">{m.text}</p>
                             <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-75">
                               <span>
                                 {new Date(m.createdAt).toLocaleTimeString([], {
@@ -1039,7 +1217,7 @@ export function StudyBuddyPage() {
                           stopTyping(activeConversation.otherUser.id);
                         }, 2000);
                       }}
-                      className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
+                      className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
                     />
 
                     <button
