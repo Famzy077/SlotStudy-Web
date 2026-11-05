@@ -22,6 +22,7 @@ import {
   RotateCcw,
   ArrowLeft,
 } from 'lucide-react';
+import { StudentProfileModal } from './StudentProfileModal';
 import { useSocket } from '../../../hooks/useSocket';
 import {
   studyBuddyService,
@@ -83,6 +84,8 @@ export function StudyBuddyPage() {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [cancelConfirmTarget, setCancelConfirmTarget] = useState<{ id: string; name: string } | null>(null);
+  const [declineConfirmTarget, setDeclineConfirmTarget] = useState<FriendRequestItem | null>(null);
+  const [profileTarget, setProfileTarget] = useState<StudyBuddyStudent | null>(null);
   const [reportReason, setReportReason] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
@@ -374,13 +377,15 @@ export function StudyBuddyPage() {
     }
   };
 
-  const handleDeclineRequest = async (id: string) => {
+  const handleDeclineRequest = async (id: string): Promise<boolean> => {
     try {
       await studyBuddyService.declineFriendRequest(id);
       setIncomingRequests((prev) => prev.filter((r) => r.id !== id));
       fetchDiscover();
+      return true;
     } catch (err) {
       console.warn('Decline error:', err);
+      return false;
     }
   };
 
@@ -828,13 +833,13 @@ export function StudyBuddyPage() {
                             <span className="font-medium text-amber-800 dark:text-amber-300">
                               Request sent • Waiting for approval
                             </span>
-                            <button
+                            {/* <button
                               disabled={isBusy}
                               onClick={() => setCancelConfirmTarget({ id: student.id, name: student.name })}
                               className="font-bold text-rose-600 hover:underline dark:text-rose-400"
                             >
                               Cancel Request
-                            </button>
+                            </button> */}
                           </div>
                         )}
                       </div>
@@ -916,7 +921,12 @@ export function StudyBuddyPage() {
                           >
                             <div>
                               <div className="flex items-start justify-between gap-3">
-                                <div className="flex min-w-0 items-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setProfileTarget(req.user)}
+                                  aria-label={`View ${req.user.name}'s profile`}
+                                  className="flex min-w-0 items-center gap-3 text-left"
+                                >
                                   <div className="relative shrink-0">
                                     {req.user.avatarUrl ? (
                                       <img
@@ -944,7 +954,7 @@ export function StudyBuddyPage() {
                                       </span>
                                     </div>
                                   </div>
-                                </div>
+                                </button>
 
                                 <div className="flex shrink-0 items-center gap-2">
                                   <button
@@ -954,7 +964,7 @@ export function StudyBuddyPage() {
                                     Accept
                                   </button>
                                   <button
-                                    onClick={() => handleDeclineRequest(req.id)}
+                                    onClick={() => setDeclineConfirmTarget(req)}
                                     className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                                   >
                                     Decline
@@ -1015,7 +1025,12 @@ export function StudyBuddyPage() {
                           >
                             <div>
                               <div className="flex items-start justify-between gap-3">
-                                <div className="flex min-w-0 items-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setProfileTarget(req.user)}
+                                  aria-label={`View ${req.user.name}'s profile`}
+                                  className="flex min-w-0 items-center gap-3 text-left"
+                                >
                                   <div className="relative shrink-0">
                                     {req.user.avatarUrl ? (
                                       <img
@@ -1047,7 +1062,7 @@ export function StudyBuddyPage() {
                                       <span>Pending approval</span>
                                     </div>
                                   </div>
-                                </div>
+                                </button>
 
                                 <button
                                   disabled={isCancelling}
@@ -1200,35 +1215,42 @@ export function StudyBuddyPage() {
                       <ArrowLeft size={18} />
                     </button>
 
-                    <div className="relative">
-                      {activeConversation.otherUser.avatarUrl ? (
-                        <img
-                          src={activeConversation.otherUser.avatarUrl}
-                          alt={activeConversation.otherUser.name}
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700">
-                          {activeConversation.otherUser.name.charAt(0)}
-                        </div>
-                      )}
-                      {isUserOnline(activeConversation.otherUser.id) && (
-                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setProfileTarget(activeConversation.otherUser)}
+                      aria-label={`View ${activeConversation.otherUser.name}'s profile`}
+                      className="flex items-center gap-3 rounded-xl text-left hover:opacity-80"
+                    >
+                      <div className="relative">
+                        {activeConversation.otherUser.avatarUrl ? (
+                          <img
+                            src={activeConversation.otherUser.avatarUrl}
+                            alt=""
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700">
+                            {activeConversation.otherUser.name.charAt(0)}
+                          </div>
+                        )}
+                        {isUserOnline(activeConversation.otherUser.id) && (
+                          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                        )}
+                      </div>
 
-                    <div>
-                      <h4 className="font-bold text-slate-900 dark:text-slate-50 text-sm">
-                        {activeConversation.otherUser.name}
-                      </h4>
-                      <p className="text-[11px] text-slate-500">
-                        {isUserTyping(activeConversation.otherUser.id)
-                          ? 'Typing...'
-                          : isUserOnline(activeConversation.otherUser.id)
-                            ? 'Online'
-                            : activeConversation.otherUser.school || 'Coursemate'}
-                      </p>
-                    </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 dark:text-slate-50 text-sm">
+                          {activeConversation.otherUser.name}
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          {isUserTyping(activeConversation.otherUser.id)
+                            ? 'Typing...'
+                            : isUserOnline(activeConversation.otherUser.id)
+                              ? 'Online'
+                              : activeConversation.otherUser.school || 'Coursemate'}
+                        </p>
+                      </div>
+                    </button>
                   </div>
 
                   <div className="relative">
@@ -1591,15 +1613,15 @@ export function StudyBuddyPage() {
               </div>
 
               <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-50">
-                Cancel Friend Request?
+                Withdraw friend request?
               </h3>
 
               <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                Are you sure you want to cancel the friend request sent to{' '}
+                This will withdraw your pending request to{' '}
                 <span className="font-bold text-slate-800 dark:text-slate-200">
                   {cancelConfirmTarget.name}
                 </span>
-                ? You can always send a new request later.
+                . You can send a new request later.
               </p>
             </div>
 
@@ -1618,12 +1640,64 @@ export function StudyBuddyPage() {
                 onClick={() => handleCancelFriendRequest(cancelConfirmTarget.id)}
                 className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-50"
               >
-                {actioningUserIds.has(cancelConfirmTarget.id) ? 'Cancelling...' : 'Yes, Cancel'}
+                {actioningUserIds.has(cancelConfirmTarget.id)
+                  ? 'Withdrawing...'
+                  : 'Withdraw request'}
               </button>
             </div>
           </div>
         </div>
       )}
+      {declineConfirmTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                <AlertTriangle size={28} />
+              </div>
+              <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-50">
+                Decline friend request?
+              </h3>
+              <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                Decline the request from{' '}
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {declineConfirmTarget.user.name}
+                </span>
+                ? They can send you another request later.
+              </p>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                disabled={actioningUserIds.has(declineConfirmTarget.id)}
+                onClick={() => setDeclineConfirmTarget(null)}
+                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                Keep Request
+              </button>
+              <button
+                type="button"
+                disabled={actioningUserIds.has(declineConfirmTarget.id)}
+                onClick={async () => {
+                  if (await handleDeclineRequest(declineConfirmTarget.id)) {
+                    setDeclineConfirmTarget(null);
+                  }
+                }}
+                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-50"
+              >
+                {actioningUserIds.has(declineConfirmTarget.id)
+                  ? 'Declining...'
+                  : 'Decline request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <StudentProfileModal
+        student={profileTarget}
+        isOnline={profileTarget ? isUserOnline(profileTarget.id) : false}
+        onClose={() => setProfileTarget(null)}
+      />
     </div>
   );
 }
