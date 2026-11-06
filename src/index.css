@@ -692,6 +692,9 @@ kbd { display: inline-flex; align-items: center; gap: 2px; padding: 3px 5px; bor
 .auth-mobile-brand .brand-logo { width: 90px; }
 .policy-check { line-height: 1.5; }
 .policy-check a { color: #5d6fd1; font-weight: 600; }
+.terms-document { display: grid; gap: 18px; color: #adb7cb; font-size: 11px; line-height: 1.7; }
+.terms-document h3 { margin: 0 0 6px; color: #f3f5fb; font-size: 13px; }
+.terms-document p { margin: 0 0 8px; }
 .back-link { margin-bottom: 18px; }
 .auth-content > .back-link { display: inline-flex; margin-bottom: 24px; }
 .setup-content { padding-top: 18px; padding-bottom: 18px; }

@@ -1395,6 +1395,11 @@ export default function LandingPage() {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/terms" className="hover:text-[#2563eb] dark:hover:text-blue-400 transition-colors">
+                    Terms and Conditions
+                  </Link>
+                </li>
+                <li>
                   <button
                     type="button"
                     onClick={() => setApkOpen(true)}

@@ -5,6 +5,7 @@ import LandingPage from './pages/landing/LandingPage';
 import {
   LoginPage,
   RegisterPage,
+  TermsPage,
   VerifyOtpPage,
   ForgotPasswordPage,
   AcademicSetupPage,
@@ -42,6 +43,7 @@ export function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/terms" element={<TermsPage />} />
         <Route path="/verify-otp" element={<VerifyOtpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ForgotPasswordPage />} />

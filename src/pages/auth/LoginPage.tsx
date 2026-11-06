@@ -32,6 +32,8 @@ export function LoginPage() {
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const termsAcceptedRef = useRef(false);
   const setSession = useAuth((state) => state.setSession);
   const navigate = useNavigate();
   const googleButton = useRef<HTMLDivElement>(null);
@@ -51,7 +53,10 @@ export function LoginPage() {
           setBusy(true);
           setError('');
           try {
-            const { data } = await api.post('/auth/google', { idToken: credential });
+            const { data } = await api.post('/auth/google', {
+              idToken: credential,
+              termsAccepted: termsAcceptedRef.current,
+            });
             const session = unwrap<TokenResponse>(data);
             setSession(session);
             navigate(
@@ -156,6 +161,18 @@ export function LoginPage() {
             <div className="auth-divider">
               <span>OR</span>
             </div>
+            <label className="check-label policy-check">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(event) => {
+                  termsAcceptedRef.current = event.target.checked;
+                  setTermsAccepted(event.target.checked);
+                }}
+              />{' '}
+              If this is your first Google sign-in, I agree to the{' '}
+              <Link to="/terms">Terms and Conditions</Link>.
+            </label>
             <div className="google-signin" ref={googleButton} />
           </>
         )}

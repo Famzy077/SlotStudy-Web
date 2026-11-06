@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Gift } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Gift } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../lib/api';
 import { useAuth, type User } from '../../lib/auth';
 import { AuthLayout, Field } from './AuthLayout';
@@ -19,6 +19,8 @@ export function RegisterPage() {
   });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   function update(key: keyof typeof values, value: string) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -27,9 +29,17 @@ export function RegisterPage() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError('');
+    if (!termsAccepted) {
+      setError('Please accept the Terms and Conditions to create an account.');
+      return;
+    }
     setBusy(true);
     try {
-      const payload = refCode ? { ...values, referralCode: refCode } : values;
+      const payload = {
+        ...values,
+        termsAccepted: true,
+        ...(refCode ? { referralCode: refCode } : {}),
+      };
       const { data } = await api.post('/auth/register', payload);
       const response = unwrap<
         TokenResponse & { otpRequired?: boolean; email?: string }
@@ -105,15 +115,32 @@ export function RegisterPage() {
           />
           <Field
             label="Password"
-            type="password"
+            type={passwordVisible ? 'text' : 'password'}
             value={values.password}
             onChange={(value) => update('password', value)}
             placeholder="At least 6 characters"
             autoComplete="new-password"
+            right={
+              <button
+                className="field-icon"
+                type="button"
+                aria-label={passwordVisible ? 'Hide password' : 'Show password'}
+                aria-pressed={passwordVisible}
+                onClick={() => setPasswordVisible((visible) => !visible)}
+              >
+                {passwordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            }
           />
           <label className="check-label policy-check">
-            <input type="checkbox" required /> I agree to the{' '}
-            <a href="#terms">Terms of Service</a> and Privacy Policy.
+            <input
+              type="checkbox"
+              required
+              checked={termsAccepted}
+              onChange={(event) => setTermsAccepted(event.target.checked)}
+            />{' '}
+            I have read and agree to the{' '}
+            <Link to="/terms">Terms and Conditions</Link>.
           </label>
           <button className="button button-primary auth-submit" disabled={busy}>
             {busy ? 'Creating account…' : 'Create my account'}
