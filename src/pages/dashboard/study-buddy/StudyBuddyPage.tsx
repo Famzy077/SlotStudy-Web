@@ -21,6 +21,7 @@ import {
   X,
   RotateCcw,
   ArrowLeft,
+  Smile,
 } from 'lucide-react';
 import { StudentProfileModal } from './StudentProfileModal';
 import { useSocket } from '../../../hooks/useSocket';
@@ -41,6 +42,7 @@ const POPULAR_SCHOOLS = [
   'University of Lagos (UNILAG)',
   'Ahmadu Bello University (ABU)',
 ];
+const CHAT_EMOJIS = ['😀', '😂', '😊', '😍', '👍', '🙏', '🎉', '❤️'];
 
 export function StudyBuddyPage() {
   const {
@@ -76,6 +78,7 @@ export function StudyBuddyPage() {
   const [activeConversation, setActiveConversation] = useState<ConversationItem | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [loadingChats, setLoadingChats] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
@@ -95,6 +98,20 @@ export function StudyBuddyPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
+
+  const insertChatEmoji = (emoji: string) => {
+    const input = messageInputRef.current;
+    const start = input?.selectionStart ?? inputText.length;
+    const end = input?.selectionEnd ?? start;
+    const nextText = `${inputText.slice(0, start)}${emoji}${inputText.slice(end)}`;
+    setInputText(nextText);
+    setEmojiPickerOpen(false);
+    requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(start + emoji.length, start + emoji.length);
+    });
+  };
 
   // ──────────────────────────────────────────────
   // Fetch Discover
@@ -260,6 +277,24 @@ export function StudyBuddyPage() {
       if (activeConversation && msg.conversationId === activeConversation.id) {
         setMessages((prev) => {
           if (prev.some((m) => m.id === msg.id)) return prev;
+          const optimisticIndex = prev.findIndex(
+            (m) => m.isOutgoing && m.status === 'sending' && m.text === msg.text,
+          );
+          if (optimisticIndex !== -1) {
+            return prev.map((m, index) =>
+              index === optimisticIndex
+                ? {
+                    ...m,
+                    id: msg.id,
+                    senderId: msg.senderId,
+                    readAt: msg.readAt,
+                    createdAt: msg.createdAt,
+                    status: 'sent',
+                    error: undefined,
+                  }
+                : m,
+            );
+          }
           return [
             ...prev,
             {
@@ -412,7 +447,11 @@ export function StudyBuddyPage() {
       setMessages((prev) => [...prev, optimistic]);
     } else {
       setMessages((prev) =>
-        prev.map((m) => (m.id === tempId ? { ...m, status: 'sending' } : m)),
+        prev.map((m) =>
+          m.id === tempId
+            ? { ...m, status: 'sending', error: undefined }
+            : m,
+        ),
       );
     }
 
@@ -433,12 +472,20 @@ export function StudyBuddyPage() {
         );
       } else {
         setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' } : m)),
+          prev.map((m) =>
+            m.id === tempId
+              ? { ...m, status: 'failed', error: res.error || 'Failed to send message.' }
+              : m,
+          ),
         );
       }
     } catch {
       setMessages((prev) =>
-        prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' } : m)),
+        prev.map((m) =>
+          m.id === tempId
+            ? { ...m, status: 'failed', error: 'Message could not be sent. Please retry.' }
+            : m,
+        ),
       );
     }
   };
@@ -736,12 +783,17 @@ export function StudyBuddyPage() {
                     >
                       <div>
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setProfileTarget(student)}
+                            aria-label={`View ${student.name}'s profile`}
+                            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                          >
                             <div className="relative">
                               {student.avatarUrl ? (
                                 <img
                                   src={student.avatarUrl}
-                                  alt={student.name}
+                                  alt=""
                                   className="h-12 w-12 rounded-full object-cover"
                                 />
                               ) : (
@@ -764,8 +816,11 @@ export function StudyBuddyPage() {
                                   <span className="min-w-0 truncate">{student.school}</span>
                                 </div>
                               )}
+                              <span className="mt-1 inline-block text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
+                                View profile
+                              </span>
                             </div>
-                          </div>
+                          </button>
 
                           {/* Friend Action Button */}
                           {isPendingSent ? (
@@ -1351,6 +1406,9 @@ export function StudyBuddyPage() {
                                 )
                               )}
                             </div>
+                            {isFailed && m.error && (
+                              <p className="mt-1 text-[10px] leading-4 text-rose-100">{m.error}</p>
+                            )}
                           </div>
                         </div>
                       );
@@ -1360,7 +1418,22 @@ export function StudyBuddyPage() {
                 </div>
 
                 {/* Input Bar */}
-                <div className="border-t border-slate-200 p-3 dark:border-slate-800">
+                <div className="relative border-t border-slate-200 p-3 dark:border-slate-800">
+                  {emojiPickerOpen && (
+                    <div className="absolute bottom-full right-3 mb-2 flex gap-1 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                      {CHAT_EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          aria-label={`Insert ${emoji}`}
+                          onClick={() => insertChatEmoji(emoji)}
+                          className="rounded-lg p-1.5 text-lg transition hover:bg-slate-100 dark:hover:bg-slate-700"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -1369,6 +1442,7 @@ export function StudyBuddyPage() {
                     className="flex items-center gap-2"
                   >
                     <input
+                      ref={messageInputRef}
                       type="text"
                       placeholder="Type a message..."
                       value={inputText}
@@ -1384,6 +1458,15 @@ export function StudyBuddyPage() {
                       className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
                     />
 
+                    <button
+                      type="button"
+                      aria-label="Choose an emoji"
+                      aria-expanded={emojiPickerOpen}
+                      onClick={() => setEmojiPickerOpen((open) => !open)}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800"
+                    >
+                      <Smile size={18} />
+                    </button>
                     <button
                       type="submit"
                       disabled={!inputText.trim()}

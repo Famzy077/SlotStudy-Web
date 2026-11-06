@@ -60,6 +60,7 @@ export interface ChatMessage {
   createdAt: string;
   isOutgoing?: boolean;
   status?: 'sending' | 'sent' | 'failed';
+  error?: string;
 }
 
 export interface MessagesResponse {
