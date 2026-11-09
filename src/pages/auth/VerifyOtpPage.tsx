@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import api, { getErrorMessage, unwrap } from '../../lib/api';
+import api, { getErrorMessage, unwrap, wakeServer } from '../../lib/api';
 import { useAuth, type User } from '../../lib/auth';
 import { AuthLayout, Field } from './AuthLayout';
 
@@ -15,6 +15,10 @@ export function VerifyOtpPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    wakeServer();
+  }, []);
 
   useEffect(() => {
     if (!seconds) return;

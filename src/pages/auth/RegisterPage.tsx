@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff, Gift } from 'lucide-react';
-import api, { getErrorMessage, unwrap } from '../../lib/api';
+import api, { getErrorMessage, unwrap, wakeServer } from '../../lib/api';
 import { useAuth, type User } from '../../lib/auth';
 import { AuthLayout, Field } from './AuthLayout';
 
@@ -21,6 +21,10 @@ export function RegisterPage() {
   const [busy, setBusy] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+
+  useEffect(() => {
+    wakeServer();
+  }, []);
 
   function update(key: keyof typeof values, value: string) {
     setValues((current) => ({ ...current, [key]: value }));

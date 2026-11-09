@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff } from 'lucide-react';
-import api, { getErrorMessage, unwrap } from '../../lib/api';
+import api, { getErrorMessage, unwrap, wakeServer } from '../../lib/api';
 import { useAuth, type User } from '../../lib/auth';
 import { AuthLayout, Field } from './AuthLayout';
 
@@ -38,6 +38,10 @@ export function LoginPage() {
   const navigate = useNavigate();
   const googleButton = useRef<HTMLDivElement>(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    wakeServer();
+  }, []);
 
   useEffect(() => {
     if (!googleClientId || !googleButton.current) return;

@@ -2,9 +2,8 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
+  BookOpen,
   BookOpenCheck,
-  BrainCircuit,
-  CalendarClock,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -12,16 +11,16 @@ import {
   FileText,
   Flame,
   FolderKanban,
+  GraduationCap,
   Laptop,
+  Layers,
   Loader2,
-  LockKeyhole,
   Menu,
   Moon,
   RefreshCw,
   Send,
   ShieldCheck,
   Smartphone,
-  Sparkles,
   Sun,
   Target,
   Trophy,
@@ -99,39 +98,39 @@ const SOCIAL_LINKS = [
 
 const FEATURES = [
   {
-    icon: Sparkles,
-    title: 'AI Document Summarizer',
-    text: 'Turn 60-page lecture slides, textbooks, and PDF handouts into executive study briefs, core formulas, and key exam flashpoints in seconds.',
+    icon: FileText,
+    title: 'Structured Lecture Briefs',
+    text: 'Condense 60-page slides and dense PDF handouts into executive study briefs, essential formulas, and core exam takeaways in seconds.',
     tone: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60',
   },
   {
-    icon: BrainCircuit,
-    title: 'Virtual 24/7 Study Buddy',
-    text: 'Stuck on a tricky concept at 2 AM? Ask your AI tutor for intuitive analogies, mathematical breakdowns, and step-by-step problem explanations.',
+    icon: GraduationCap,
+    title: 'Grounded Study Buddy',
+    text: 'Stuck on a tricky concept at 2 AM? Ask your senior coursemate tutor for intuitive breakdowns, everyday analogies, or Pidgin explanations—100% grounded in your notes.',
     tone: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200/60 dark:border-purple-800/60',
   },
   {
     icon: BookOpenCheck,
     title: 'Adaptive Practice Quizzes',
-    text: 'Generate high-yield multiple-choice questions directly from your course syllabus with immediate rationale explanations and score tracking.',
+    text: 'Generate high-yield multiple-choice questions directly from your materials with immediate answer rationales and mistake breakdowns.',
     tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60',
   },
   {
     icon: FolderKanban,
-    title: 'Organized Course Library',
-    text: 'Keep lecture handouts, materials, study notes, and generated summaries neatly separated by course rather than buried across desktop folders.',
+    title: 'Organized Course Workspaces',
+    text: 'Keep lecture handouts, study briefs, and quizzes neatly categorized by course code instead of buried across folders and group chats.',
     tone: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60',
   },
   {
     icon: Flame,
-    title: 'Daily Streaks & XP Rewards',
-    text: 'Build an unbreakable study habit. Earn XP with every summary read and quiz completed, leveling up as you prepare for midterms and finals.',
+    title: 'Daily Streaks & XP Milestones',
+    text: 'Build a consistent revision routine. Earn XP with every summary read and quiz completed to stay accountable through test week.',
     tone: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/60',
   },
   {
-    icon: CalendarClock,
-    title: 'Exam Countdown & Telemetry',
-    text: 'Track exact completion rates per subject and set exam targets so you are never caught unprepared when revision week arrives.',
+    icon: Target,
+    title: 'Exam Readiness Tracking',
+    text: 'Monitor quiz accuracy and subject confidence scores so you know exactly which topics need your attention before walking into the exam hall.',
     tone: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-200/60 dark:border-cyan-800/60',
   },
 ];
@@ -141,19 +140,19 @@ const STEPS = [
     icon: Upload,
     num: '01',
     title: 'Upload Course Materials',
-    text: 'Upload lecture slides, PDF handouts, or paste syllabus notes directly into your course workspace.',
+    text: 'Drop lecture slides, PDF handouts, or syllabus notes directly into your course workspace.',
   },
   {
-    icon: Sparkles,
+    icon: Layers,
     num: '02',
-    title: 'Instant AI Synthesis',
-    text: 'SlotStudy analyzes the material to extract core definitions, formulas, and high-yield exam takeaways.',
+    title: 'Structured Concept Breakdown',
+    text: 'SlotStudy parses your document to isolate core definitions, key formulas, and high-yield flashpoints—citing exact source pages.',
   },
   {
     icon: Trophy,
     num: '03',
-    title: 'Master & Practice',
-    text: 'Take adaptive practice quizzes, chat with your study buddy, and sync your streak seamlessly to Android.',
+    title: 'Practice & Master',
+    text: 'Test yourself with adaptive quizzes, resolve doubts with your grounded study buddy, and maintain your streak across devices.',
   },
 ];
 
@@ -179,8 +178,12 @@ const FAQS = [
     a: 'Yes, creating an account takes under 30 seconds and gives you free access to course creation, document summaries, practice quizzes, and the Android mobile app.',
   },
   {
-    q: 'Are the AI summaries accurate for exam revision?',
-    a: 'SlotStudy uses curriculum-grounded models tuned specifically for academic comprehension. While it captures key formulas and definitions with exceptional precision, we always encourage using it alongside your official lecture materials.',
+    q: 'How accurate are the study briefs for exam revision?',
+    a: 'SlotStudy is strictly grounded in the materials you upload. Rather than pulling generic information from the open web that might contradict your lecturer, it extracts and cites formulas, definitions, and concepts directly from your lecture slides and handouts.',
+  },
+  {
+    q: 'Can the Study Buddy explain concepts in Nigerian Pidgin or everyday analogies?',
+    a: 'Yes! SlotStudy can seamlessly switch between articulate academic English and relatable Nigerian Pidgin with everyday analogies, making tough university concepts click without losing academic rigor.',
   },
 ];
 
@@ -224,9 +227,6 @@ function SlotStudyBrandLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
           <span className="text-[#10b981] dark:text-[#10b981]">Study</span>
           <span className="h-1.5 w-1.5 rounded-full bg-[#f59e0b] ml-0.5 inline-block" />
         </div>
-        {/* <span className="hidden sm:inline-block text-[9px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mt-0.5 font-mono">
-          AI Academic Workspace
-        </span> */}
       </div>
     </div>
   );
@@ -236,7 +236,7 @@ function SectionHeading({ eyebrow, title, text }: { eyebrow: string; title: Reac
   return (
     <Reveal className="mx-auto mb-14 max-w-2xl text-center">
       <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/80 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#2563eb] dark:text-blue-400">
-        {/* <Sparkles size={12} className="text-[#2563eb] dark:text-blue-400" /> */}
+        <span className="h-1.5 w-1.5 rounded-full bg-[#2563eb] dark:bg-blue-400" />
         {eyebrow}
       </span>
       <h2 className="mt-4 font-[Manrope] text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
@@ -304,9 +304,14 @@ function SummaryPreview() {
       <div className="ls-panel rounded-xl border border-blue-200 dark:border-blue-900/60 bg-white dark:bg-slate-900 p-5 shadow-sm">
         <div className="mb-3 flex items-center justify-between">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 text-[10px] font-bold tracking-wide text-[#2563eb] dark:text-blue-400 font-mono">
-            <Sparkles size={11} /> AI STRUCTURED SUMMARY
+            <BookOpenCheck size={12} /> STRUCTURED STUDY BRIEF
           </span>
-          <span className="text-[11px] font-mono text-slate-400">3 min read</span>
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200/60 dark:border-emerald-800/60">
+              Intermediate
+            </span>
+            <span className="text-[11px] font-mono text-slate-400">3 min read</span>
+          </div>
         </div>
         <h4 className="font-[Manrope] text-base font-extrabold text-slate-900 dark:text-white">
           Cellular Respiration: High-Yield Breakdown
@@ -341,24 +346,39 @@ function BuddyPreview() {
         </div>
       </div>
       <div className="ls-panel flex items-start gap-3">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#2563eb] to-[#7658d6] text-white shadow-md">
-          <BrainCircuit size={15} />
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white shadow-md">
+          <GraduationCap size={16} />
         </span>
         <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 text-[13px] leading-relaxed text-slate-700 dark:text-slate-300 shadow-sm">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-900 px-2 py-0.5 text-[10px] font-mono font-bold text-[#2563eb] dark:text-blue-400">
+              <BookOpenCheck size={11} /> Handout 3 · Page 14
+            </span>
+            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+              <CheckCircle2 size={11} /> 100% Grounded
+            </span>
+          </div>
           Great question! Think of the Krebs cycle as an <b>energy extraction refinery</b> rather than the main power generator 💡
           <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-slate-600 dark:text-slate-400">
             <li>Its real job isn't making ATP directly — it strips high-energy electrons from fuel molecules.</li>
             <li>It packs those electrons into carriers called <b>NADH</b> and <b>FADH2</b>.</li>
             <li>Those carriers feed the Electron Transport Chain, where <b>over 90% of your total ATP</b> is synthesized!</li>
           </ol>
-          <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-blue-600 dark:text-blue-400 font-bold">
-            <span>Ready for a quick 1-question quiz on this?</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-mono">+25 XP</span>
+          <div className="mt-3 flex flex-wrap gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <span className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+              🇳🇬 Explain in Pidgin
+            </span>
+            <span className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+              💡 Everyday Analogy
+            </span>
+            <span className="inline-flex items-center rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#2563eb] dark:text-blue-400 px-2.5 py-1 text-[11px] font-bold">
+              🎯 Quiz Me on This
+            </span>
           </div>
         </div>
       </div>
       <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2.5 text-[13px] text-slate-400 shadow-sm">
-        <span>Ask anything about your lecture slides…</span>
+        <span>Ask your study buddy anything from this handout…</span>
         <span className="ml-auto grid h-7 w-7 place-items-center rounded-lg bg-[#2563eb] text-white">
           <Send size={13} />
         </span>
@@ -479,7 +499,7 @@ function ProgressPreview() {
 
       <div className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 p-5 md:col-span-3 bg-white dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <span className="text-sm font-extrabold text-slate-900 dark:text-white font-[Manrope]">Course Revision Telemetry</span>
+          <span className="text-sm font-extrabold text-slate-900 dark:text-white font-[Manrope]">Subject Mastery & Revision Progress</span>
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded">
             <Target size={12} /> Midterm in 12 days
           </span>
@@ -501,9 +521,9 @@ function ProgressPreview() {
 }
 
 const PREVIEW_TABS = [
-  { id: 'summary', label: 'AI Summaries', icon: Sparkles, url: 'slotstudyonline.com/summaries', Comp: SummaryPreview },
-  { id: 'buddy', label: 'Virtual Study Buddy', icon: BrainCircuit, url: 'slotstudyonline.com/study-room', Comp: BuddyPreview },
-  { id: 'quiz', label: 'Quiz Arena', icon: BookOpenCheck, url: 'slotstudyonline.com/quizzes', Comp: QuizPreview },
+  { id: 'summary', label: 'Study Briefs', icon: FileText, url: 'slotstudyonline.com/summaries', Comp: SummaryPreview },
+  { id: 'buddy', label: 'Study Buddy', icon: GraduationCap, url: 'slotstudyonline.com/study-room', Comp: BuddyPreview },
+  { id: 'quiz', label: 'Practice Quiz', icon: BookOpenCheck, url: 'slotstudyonline.com/quizzes', Comp: QuizPreview },
   { id: 'progress', label: 'Progress & Streaks', icon: Trophy, url: 'slotstudyonline.com/progress', Comp: ProgressPreview },
 ] as const;
 
@@ -765,7 +785,7 @@ export default function LandingPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
-                <span className="min-w-0 whitespace-normal leading-tight">AI-POWERED ACADEMIC ACCELERATOR</span>
+                <span className="min-w-0 whitespace-normal leading-tight">SYLLABUS-ALIGNED ACADEMIC WORKSPACE</span>
               </div>
             </Reveal> */}
 
@@ -773,17 +793,17 @@ export default function LandingPage() {
               <h1 className="mt-4 sm:mt-5 font-[Manrope] text-[30px] sm:text-5xl lg:text-[54px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12] sm:leading-[1.08]">
                 Master Every Course.
                 <span className="block mt-1 bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#10b981] bg-clip-text text-transparent">
-                  Powered by AI.
+                  Grounded in Your Syllabus.
                 </span>
                 <span className="block mt-1 text-slate-700 dark:text-slate-300 text-xl sm:text-4xl font-bold">
-                  Engineered for Top Grades.
+                  Engineered for Exam Confidence.
                 </span>
               </h1>
             </Reveal>
 
             <Reveal delay={160}>
               <p className="mt-3.5 sm:mt-5 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-                Transform messy lecture slides, 60-page PDF textbooks, and syllabus notes into instant structured study briefs, practice quiz arenas, and a 24/7 AI tutor. Synchronized across Web and Android.
+                Turn dense lecture slides, messy PDF handouts, and past questions into structured study summaries, practice quiz arenas, and an adaptive study buddy. Strictly grounded in your course materials, across Web and Android.
               </p>
             </Reveal>
 
@@ -814,20 +834,7 @@ export default function LandingPage() {
                 </button>
               </div>
             </Reveal>
-
-            <Reveal delay={320}>
-              <ul className="mt-5 sm:mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 size={14} className="text-[#10b981]" /> Free account setup
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 size={14} className="text-[#2563eb] dark:text-blue-400" /> Real-time cross-device sync
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 size={14} className="text-[#f59e0b]" /> Offline mobile revision
-                </li>
-              </ul>
-            </Reveal>
+            
           </div>
 
           {/* Right Column: 3D Scene + Floating Live Student Chips inside Frame */}
@@ -853,13 +860,13 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Floating Live Badge 2: AI Summary (Desktop only) */}
-                  <div className="hidden sm:flex ls-float-alt pointer-events-none absolute right-0 top-16 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-purple-500/10 backdrop-blur sm:right-2">
+                  {/* Floating Live Badge 2: Study Brief (Desktop only) */}
+                  <div className="hidden sm:flex ls-float-alt pointer-events-none absolute right-0 top-16 items-center gap-2.5 rounded-2xl border border-white/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 px-3.5 py-2.5 shadow-xl shadow-blue-500/10 backdrop-blur sm:right-2">
                     <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563eb] dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60">
-                      <Sparkles size={18} />
+                      <BookOpen size={18} />
                     </span>
                     <div className="leading-tight">
-                      <b className="block text-[13px] font-[Manrope] text-slate-900 dark:text-white">Summary Ready</b>
+                      <b className="block text-[13px] font-[Manrope] text-slate-900 dark:text-white">Study Brief Ready</b>
                       <span className="text-[11px] font-mono text-slate-400">BIO201 · 3 min read</span>
                     </div>
                   </div>
@@ -884,9 +891,9 @@ export default function LandingPage() {
                     <span className="text-[9px] font-mono text-slate-400">14 Days</span>
                   </div>
                   <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 text-center">
-                    <span className="text-[#2563eb] dark:text-blue-400 mb-0.5"><Sparkles size={15} /></span>
+                    <span className="text-[#2563eb] dark:text-blue-400 mb-0.5"><FileText size={15} /></span>
                     <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white leading-tight">Summaries</b>
-                    <span className="text-[9px] font-mono text-slate-400">AI Notes</span>
+                    <span className="text-[9px] font-mono text-slate-400">Study Brief</span>
                   </div>
                   <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 text-center">
                     <span className="text-[#10b981] mb-0.5"><CheckCircle2 size={15} /></span>
@@ -920,7 +927,7 @@ export default function LandingPage() {
       </section>
 
       {/* =========================================================================
-          4. CORE PLATFORM FEATURE SHOWCASE ("THE SLOTSTUDY STRATA")
+          4. CORE PLATFORM FEATURE SHOWCASE ("THE SLOTSTUDY WORKSPACE")
           ========================================================================= */}
       <section id="strata" className="scroll-mt-20 py-20 sm:py-28">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -928,10 +935,10 @@ export default function LandingPage() {
             eyebrow="Interactive Study Environment"
             title={
               <>
-                The SlotStudy <span className="text-[#2563eb] dark:text-blue-400">Strata</span>
+                The SlotStudy <span className="text-[#2563eb] dark:text-blue-400">Workspace</span>
               </>
             }
-            text="Explore the live simulations below to see how SlotStudy accelerates reading, comprehension, and exam preparation."
+            text="Explore the live simulations below to see how SlotStudy accelerates reading, comprehension, and verified exam revision."
           />
 
           <Reveal>
@@ -975,10 +982,10 @@ export default function LandingPage() {
             eyebrow="Purpose-Built Academic Tools"
             title={
               <>
-                Engineered for How Students <span className="text-[#2563eb] dark:text-blue-400">Actually Study</span>
+                Built for How University Students <span className="text-[#2563eb] dark:text-blue-400">Actually Study</span>
               </>
             }
-            text="No distractions, no overwhelming menus. Just the academic tools you need to stay on top of all your courses."
+            text="No distractions, no hallucinated internet trivia. Just the structured study tools you need to stay on top of your semester."
           />
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -1130,8 +1137,8 @@ export default function LandingPage() {
               <div className="mx-auto mb-2 h-1.5 w-10 rounded-full bg-slate-300 dark:bg-slate-700" />
               <div className="space-y-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 p-3">
                 <div className="flex items-center gap-1.5">
-                  <Sparkles size={12} className="text-[#2563eb]" />
-                  <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white">Today's Revision</b>
+                  <BookOpen size={12} className="text-[#2563eb]" />
+                  <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white">Today's Study Plan</b>
                 </div>
                 {['Read BIO201 brief', 'Practice Quiz', 'Ask Study Buddy'].map((task, i) => (
                   <div key={task} className="flex items-center gap-1.5 rounded-lg bg-white dark:bg-slate-900 p-2 text-[10px] font-semibold text-slate-700 dark:text-slate-300 shadow-sm">
@@ -1230,10 +1237,10 @@ export default function LandingPage() {
             </div>
 
             <h2 className="relative font-[Manrope] text-3xl sm:text-4xl font-extrabold tracking-tight">
-              Ready to Make Room for What Matters?
+              Ready to Master Your Courses with Confidence?
             </h2>
             <p className="relative mx-auto mt-3 max-w-xl text-base sm:text-lg text-blue-100 leading-relaxed">
-              Join thousands of students turning messy course slides into top exam grades with SlotStudy on Web and Android.
+              Join university students turning messy lecture slides into structured study briefs and top exam grades with SlotStudy on Web and Android.
             </p>
 
             {/* BUTTONS WITH EXPLICIT HIGH-CONTRAST COLORS */}
@@ -1272,13 +1279,13 @@ export default function LandingPage() {
             <div className="grid lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-6 space-y-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[#2563eb] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 px-3 py-1 rounded-full">
-                  Early Access Waitlist
+                  Early Access Updates
                 </span>
                 <h3 className="font-[Manrope] text-2xl font-extrabold text-slate-900 dark:text-white">
-                  Join the SlotStudy Student Waitlist
+                  Join the SlotStudy Student Community
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-md">
-                  Be first in line for upcoming AI syllabus flashcard generators, personalized exam prediction features, and fresh Android APK releases.
+                  Be first to receive new interactive study tools, subject exam readiness diagnostics, and upcoming Android APK releases.
                 </p>
               </div>
 
@@ -1325,10 +1332,6 @@ export default function LandingPage() {
                       {waitlistError}
                     </div>
                   )}
-
-                  <p className="text-[11px] flex gap-2 font-mono text-slate-400 dark:text-slate-500">
-                    <LockKeyhole size={12} /> Zero spam. Only release milestones and priority invites.
-                  </p>
                 </form>
               </div>
             </div>
@@ -1339,7 +1342,7 @@ export default function LandingPage() {
             <div className="md:col-span-2 space-y-4">
               <SlotStudyBrandLogo size="md" />
               <p className="max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                Your personal AI-powered study space — structured summaries, practice quizzes, and an academic study buddy for every course.
+                Your personal academic workspace — structured lecture briefs, adaptive practice quizzes, and a grounded study buddy for every university course.
               </p>
 
               {/* Social Media Icons (LinkedIn, X, Instagram, TikTok, Telegram) */}

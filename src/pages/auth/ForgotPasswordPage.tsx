@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import api, { getErrorMessage } from '../../lib/api';
+import api, { getErrorMessage, wakeServer } from '../../lib/api';
 import { AuthLayout, Field } from './AuthLayout';
 
 export function ForgotPasswordPage() {
@@ -15,6 +15,10 @@ export function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    wakeServer();
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
