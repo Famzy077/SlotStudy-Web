@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight, BookOpenCheck, CloudUpload, FileText, Flame,
-  GraduationCap, Sparkles, Target, Trophy, Upload,
+  GraduationCap, Target, Trophy, Upload,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import type { Course, DataObject } from '../../types';
@@ -161,7 +161,7 @@ export function DashboardPage() {
           onClick={() => navigate('/study-room')}
         >
           <span>
-            <Sparkles size={19} />
+            <GraduationCap size={19} />
           </span>
           <b>Ask your study buddy</b>
           <small>Get unstuck, your way</small>

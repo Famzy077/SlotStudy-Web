@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Activity, Bell, BookOpen, BookOpenCheck, BrainCircuit, ChevronDown, ChevronRight,
-  Compass, House, LogOut, Settings, Sparkles, UserRound, Users, X,
+  Activity, Bell, BookOpen, BookOpenCheck, ChevronDown, ChevronRight,
+  Compass, FileText, GraduationCap, House, LogOut, Settings, ShieldCheck, UserRound, Users, X,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import BrandLogo from '../common/BrandLogo';
@@ -17,9 +17,9 @@ export const navigationLinks = [
   {
     title: 'Study tools',
     links: [
-      { name: 'AI summaries', to: '/ai', icon: Sparkles },
+      { name: 'Study briefs', to: '/ai', icon: FileText },
       { name: 'Study buddy', to: '/study-buddy', icon: Users },
-      { name: 'AI study room', to: '/study-room', icon: BrainCircuit },
+      { name: 'Study room', to: '/study-room', icon: GraduationCap },
       { name: 'Practice quizzes', to: '/quizzes', icon: BookOpenCheck },
     ],
   },
@@ -95,7 +95,7 @@ export function Sidebar({
                   >
                     <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
                     <span>{name}</span>
-                    {name === 'AI study room' && <span className="nav-new">AI</span>}
+                    {name === 'Study room' && <span className="nav-new">LIVE</span>}
                     {name === 'Study buddy' && <span className="nav-new">NEW</span>}
                   </Link>
                 );
@@ -107,7 +107,7 @@ export function Sidebar({
         <div className="sidebar-bottom">
           <Link to="/subscription" className="plan-card">
             <div className="plan-icon">
-              <Sparkles size={16} />
+              <ShieldCheck size={16} />
             </div>
             <div>
               <b>Subscription</b>

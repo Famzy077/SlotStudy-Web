@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, FileText, Plus, Sparkles, Upload } from 'lucide-react';
+import { ArrowRight, FileText, GraduationCap, Plus, Upload } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../../lib/api';
 import type { Material } from '../../../types';
 import { list, useApiQuery } from '../../../hooks/useApiQuery';
@@ -62,7 +62,7 @@ export function MaterialsPage() {
     <div>
       <PageTitle
         eyebrow="YOUR STUDY LIBRARY"
-        title="AI summaries"
+        title="Study briefs"
         subtitle="Thoughtful notes made from the materials you’ve uploaded."
         action={
           <Link className="button button-primary" to="/materials/upload">
@@ -73,7 +73,7 @@ export function MaterialsPage() {
       <QueryNotice error={result.error} />
       <div className="ai-hero">
         <span className="ai-hero-orb">
-          <Sparkles size={23} />
+          <GraduationCap size={23} />
         </span>
         <div>
           <span className="eyebrow">YOUR GROUNDED STUDY BUDDY</span>
@@ -84,7 +84,7 @@ export function MaterialsPage() {
           </p>
         </div>
         <Link className="button button-light" to="/study-room">
-          Open AI study room <ArrowRight size={15} />
+          Open study room <ArrowRight size={15} />
         </Link>
         <span className="ai-hero-star">✦</span>
       </div>

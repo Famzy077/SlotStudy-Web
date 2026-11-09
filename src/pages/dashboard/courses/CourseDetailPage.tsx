@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, ArrowRight, BookOpenCheck, FileText, Sparkles, Target, Upload,
+  ArrowLeft, ArrowRight, BookOpenCheck, FileText, Target, Upload,
 } from 'lucide-react';
 import type { Course, DataObject, Material } from '../../../types';
 import { list, useApiQuery } from '../../../hooks/useApiQuery';
@@ -57,7 +57,7 @@ export function CourseDetailPage() {
           {materials.length} materials
         </span>
         <span>
-          <Sparkles size={15} />
+          <BookOpenCheck size={15} />
           {summaries.length} summaries
         </span>
         <span>
@@ -109,7 +109,7 @@ export function CourseDetailPage() {
                 key={String(summary.id)}
               >
                 <span className="material-file-icon summary-icon">
-                  <Sparkles size={20} />
+                  <BookOpenCheck size={20} />
                 </span>
                 <span className="status-pill status-completed">READY TO READ</span>
                 <b>{String(summary.title || 'Untitled summary')}</b>
@@ -124,7 +124,7 @@ export function CourseDetailPage() {
           </div>
         ) : (
           <EmptyState
-            icon={Sparkles}
+            icon={BookOpenCheck}
             title="Summaries will show up here"
             detail="Process your course materials to see their study summaries."
           />

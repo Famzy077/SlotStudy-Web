@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Sparkles } from 'lucide-react';
+import { Bell, CheckCircle2 } from 'lucide-react';
 import api, { getErrorMessage } from '../../../lib/api';
 import { useApiQuery, list } from '../../../hooks/useApiQuery';
 import { PageTitle, QueryNotice, LoadingLine, EmptyState } from '../../../components/common';
@@ -67,7 +67,7 @@ export function NotificationsPage() {
               key={String(item.id || index)}
               onClick={() => void markRead(item)}
             >
-              <span className="notification-item-icon"><Sparkles size={17} /></span>
+              <span className="notification-item-icon"><Bell size={17} /></span>
               <span>
                 <b>{String(item.title || 'Notification')}</b>
                 <small>{String(item.message || item.body || '')}</small>

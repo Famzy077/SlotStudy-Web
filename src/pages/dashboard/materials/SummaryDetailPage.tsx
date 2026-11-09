@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, ArrowRight, BookOpenCheck, Clock3, FileText, MessageCircle, Sparkles,
+  ArrowLeft, ArrowRight, BookOpenCheck, Clock3, FileText, MessageCircle, Target,
 } from 'lucide-react';
 import type { DataObject } from '../../../types';
 import { getPath, useApiQuery } from '../../../hooks/useApiQuery';
@@ -82,7 +82,7 @@ export function SummaryDetailPage() {
         {Array.isArray(data.keyPoints) && data.keyPoints.length > 0 && (
           <aside className="key-points">
             <h3>
-              <Sparkles size={17} /> Keep these in mind
+              <BookOpenCheck size={17} /> Keep these in mind
             </h3>
             <ul>
               {(data.keyPoints as string[]).map((point) => (
@@ -96,7 +96,7 @@ export function SummaryDetailPage() {
       <aside className="summary-side">
         <div className="summary-side-card">
           <span className="summary-side-orb">
-            <Sparkles size={18} />
+            <Target size={18} />
           </span>
           <span className="eyebrow">A THOUGHTFUL NEXT STEP</span>
           <h3>Make sure it sticks.</h3>

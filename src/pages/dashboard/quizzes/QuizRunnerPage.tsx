@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clock3, MoreHorizontal, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clock3, HelpCircle, MoreHorizontal } from 'lucide-react';
 import api, { getErrorMessage } from '../../../lib/api';
 import { useApiQuery, list } from '../../../hooks/useApiQuery';
 import { LoadingLine, QueryNotice, EmptyState } from '../../../components/common';
@@ -161,7 +161,7 @@ export function QuizRunnerPage() {
           </div>
           {feedback && mode === 'practice' && (
             <div className="answer-explanation">
-              <Sparkles size={16} />
+              <HelpCircle size={16} />
               <p>
                 {String(
                   question.explanation ||

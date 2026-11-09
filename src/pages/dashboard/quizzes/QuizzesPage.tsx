@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { BookOpenCheck, CheckCircle2, ChevronRight, Clock3, Sparkles, Target } from 'lucide-react';
+import { BookOpenCheck, CheckCircle2, ChevronRight, Clock3, Target } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../../lib/api';
 import { useApiQuery, list, getPath } from '../../../hooks/useApiQuery';
 import { PageTitle, QueryNotice, LoadingLine, EmptyState } from '../../../components/common';
@@ -101,7 +101,7 @@ export function QuizzesPage() {
 
             <button className="button button-primary" disabled={busy || !summaryId}>
               {busy ? 'Building your quiz…' : 'Generate quiz'}
-              <Sparkles size={16} />
+              <BookOpenCheck size={16} />
             </button>
           </form>
         </div>

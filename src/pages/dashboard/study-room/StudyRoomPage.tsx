@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft, ArrowRight, Check, ChevronRight, FileText, Headphones,
-  MessageCircle, Mic, Plus, Send, Sparkles, Upload, X,
+  ArrowLeft, ArrowRight, Check, ChevronRight, FileText, GraduationCap, Headphones,
+  MessageCircle, Mic, Plus, Send, Upload, X,
 } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
@@ -263,7 +263,7 @@ export function StudyRoomPage() {
           <form className="study-setup-card" onSubmit={createSession}>
             <div className="study-setup-heading">
               <span className="setup-sparkle">
-                <Sparkles size={20} />
+                <GraduationCap size={20} />
               </span>
               <div>
                 <h2>Start a study session</h2>
@@ -473,7 +473,7 @@ export function StudyRoomPage() {
           ) : !visibleMessages.length ? (
             <div className="chat-welcome">
               <span className="chat-welcome-icon">
-                <Sparkles size={23} />
+                <GraduationCap size={23} />
               </span>
               <span className="eyebrow">A FRIENDLY PLACE TO GET UNSTUCK</span>
               <h2>
@@ -500,7 +500,7 @@ export function StudyRoomPage() {
                   {String(message.role).toLowerCase() === 'user' ? (
                     useAuth.getState().user?.name?.slice(0, 1) || 'U'
                   ) : (
-                    <Sparkles size={15} />
+                    <GraduationCap size={15} />
                   )}
                 </span>
                 <div className="message-body">
@@ -527,7 +527,7 @@ export function StudyRoomPage() {
           {busy && streamText && (
             <div className="chat-message chat-message-ai">
               <span className="message-avatar">
-                <Sparkles size={15} />
+                <GraduationCap size={15} />
               </span>
               <div className="message-body">
                 <span className="message-name">Study buddy</span>

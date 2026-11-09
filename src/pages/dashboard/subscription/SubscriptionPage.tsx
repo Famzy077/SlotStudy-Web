@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { useApiQuery, list } from '../../../hooks/useApiQuery';
 import { PageTitle, QueryNotice } from '../../../components/common';
 import type { DataObject } from '../../../types';
@@ -20,7 +20,7 @@ export function SubscriptionPage() {
       <QueryNotice error={plansQuery.error || subscriptionQuery.error} />
       <div className="subscription-card">
         <span className="plan-badge">
-          <Sparkles size={14} /> CURRENT PLAN
+          <ShieldCheck size={14} /> CURRENT PLAN
         </span>
         <h2>{planName}</h2>
         <p>

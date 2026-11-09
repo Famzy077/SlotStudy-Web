@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, BrainCircuit, ChevronRight, Search, Sparkles, Users } from 'lucide-react';
+import { BookOpen, ChevronRight, FileText, GraduationCap, Search, Users } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useClickOutside } from '../../hooks/useClickOutside';
@@ -261,7 +261,7 @@ export function AppShell() {
                   setSearchOpen(false);
                 }}
               >
-                <Sparkles size={15} /> AI summaries <ChevronRight size={14} />
+                <FileText size={15} /> Study briefs <ChevronRight size={14} />
               </button>
               <button
                 onClick={() => {
@@ -277,7 +277,7 @@ export function AppShell() {
                   setSearchOpen(false);
                 }}
               >
-                <BrainCircuit size={15} /> AI study room <ChevronRight size={14} />
+                <GraduationCap size={15} /> Study room <ChevronRight size={14} />
               </button>
             </div>
           </div>

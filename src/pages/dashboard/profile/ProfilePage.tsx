@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, BookOpen, BookOpenCheck, Check, CheckCircle2, Flame, GraduationCap, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, BookOpenCheck, Check, CheckCircle2, Flame, GraduationCap, Trophy } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { formatStudyHours } from '../../../lib/duration';
@@ -159,7 +159,7 @@ export function ProfilePage() {
         </div>
 
         <div className="profile-xp-card">
-          <span className="profile-xp-icon"><Sparkles size={20} /></span>
+          <span className="profile-xp-icon"><Trophy size={20} /></span>
           <div>
             <b>{profileStats.level != null ? `Level ${String(profileStats.level)}` : 'Level unavailable'}</b>
             <span>

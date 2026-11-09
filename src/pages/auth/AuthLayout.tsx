@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 import BrandLogo from '../../components/common/BrandLogo';
 
 export function AuthLayout({
@@ -21,7 +21,7 @@ export function AuthLayout({
         </div>
         <div className="auth-art-copy">
           <div className="auth-orbit">
-            <Sparkles size={18} />
+            <GraduationCap size={18} />
             <span>Your learning, in focus</span>
           </div>
           <h1>
