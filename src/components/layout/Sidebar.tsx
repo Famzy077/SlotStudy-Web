@@ -42,7 +42,6 @@ export const navigationLinks: NavSection[] = [
         name: 'Study buddy',
         to: '/study-buddy',
         icon: Users,
-        badge: 'NEW',
         subtitle: 'Peer revision & accountability',
         description: 'Study buddy: Quick conversational revision, coursemate discovery & study accountability',
       },
@@ -76,6 +75,7 @@ interface SidebarProps {
   open: boolean;
   onClose: () => void;
   unreadNotificationCount: number;
+  studyBuddyBadgeCount: number;
   profileOpen: boolean;
   setProfileOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   onLogout: () => void;
@@ -85,6 +85,7 @@ export function Sidebar({
   open,
   onClose,
   unreadNotificationCount,
+  studyBuddyBadgeCount,
   profileOpen,
   setProfileOpen,
   onLogout,
@@ -140,7 +141,13 @@ export function Sidebar({
                     <div className="nav-link-content">
                       <div className="nav-link-title-row">
                         <span className="nav-link-name">{name}</span>
-                        {badge && <span className="nav-new">{badge}</span>}
+                        {to === '/study-buddy' && studyBuddyBadgeCount > 0 ? (
+                          <span className="notification-badge notification-badge-inline">
+                            {studyBuddyBadgeCount > 99 ? '99+' : studyBuddyBadgeCount}
+                          </span>
+                        ) : (
+                          badge && <span className="nav-new">{badge}</span>
+                        )}
                       </div>
                       {subtitle && (
                         <span className="nav-link-subtitle">{subtitle}</span>

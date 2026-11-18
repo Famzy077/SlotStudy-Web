@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, ChevronRight, FileText, GraduationCap, Search, Users } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../lib/api';
+import { studyBuddyService } from '../../lib/studyBuddy';
 import { useAuth } from '../../lib/auth';
 import { useClickOutside } from '../../hooks/useClickOutside';
 import { useSocket } from '../../hooks/useSocket';
@@ -50,7 +51,7 @@ export function AppShell() {
   });
 
   const queryClient = useQueryClient();
-  const { addNotificationListener } = useSocket();
+  const { addNotificationListener, addMessageListener } = useSocket();
 
   const notificationsQuery = useQuery({
     queryKey: ['notifications', { limit: '50' }],
@@ -58,12 +59,36 @@ export function AppShell() {
       unwrap<unknown>((await api.get('/notifications', { params: { limit: '50' } })).data),
   });
 
+  const studyBuddyRequestsQuery = useQuery({
+    queryKey: ['study-buddy-requests'],
+    queryFn: () => studyBuddyService.getRequests(),
+  });
+
+  const studyBuddyConversationsQuery = useQuery({
+    queryKey: ['study-buddy-conversations'],
+    queryFn: () => studyBuddyService.getConversations(),
+  });
+
   useEffect(() => {
-    const unsub = addNotificationListener(() => {
+    const unsubNotif = addNotificationListener(() => {
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      void queryClient.invalidateQueries({ queryKey: ['study-buddy-requests'] });
+      void queryClient.invalidateQueries({ queryKey: ['study-buddy-conversations'] });
     });
-    return unsub;
-  }, [addNotificationListener, queryClient]);
+    const unsubMsg = addMessageListener(() => {
+      void queryClient.invalidateQueries({ queryKey: ['study-buddy-conversations'] });
+    });
+    const handleBuddyUpdate = () => {
+      void queryClient.invalidateQueries({ queryKey: ['study-buddy-requests'] });
+      void queryClient.invalidateQueries({ queryKey: ['study-buddy-conversations'] });
+    };
+    window.addEventListener('slotstudy-buddy-updated', handleBuddyUpdate);
+    return () => {
+      unsubNotif();
+      unsubMsg();
+      window.removeEventListener('slotstudy-buddy-updated', handleBuddyUpdate);
+    };
+  }, [addNotificationListener, addMessageListener, queryClient]);
 
   const streak = getStat(dashboardStats.data, 'streak.current');
   const xp = getStat(dashboardStats.data, 'xp.total');
@@ -80,6 +105,13 @@ export function AppShell() {
       : notifications.filter(
           (notification) => !notification.readAt && notification.isRead === false,
         ).length;
+
+  const incomingFriendRequestsCount = studyBuddyRequestsQuery.data?.incoming?.length ?? 0;
+  const unreadChatsCount = (studyBuddyConversationsQuery.data || []).reduce(
+    (sum, conv) => sum + (conv.unreadCount || 0),
+    0,
+  );
+  const studyBuddyBadgeCount = unreadChatsCount + incomingFriendRequestsCount;
 
   const title =
     pathname === '/dashboard'
@@ -202,6 +234,7 @@ export function AppShell() {
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         unreadNotificationCount={unreadNotificationCount}
+        studyBuddyBadgeCount={studyBuddyBadgeCount}
         profileOpen={profileOpen}
         setProfileOpen={setProfileOpen}
         onLogout={handleLogout}

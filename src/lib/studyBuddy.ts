@@ -168,6 +168,26 @@ export const studyBuddyService = {
     return unwrap<ChatMessage>(res.data);
   },
 
+  sendVoiceNote: async (
+    conversationId: string,
+    toUserId: string,
+    audioBlob: Blob,
+    duration: number,
+  ): Promise<ChatMessage> => {
+    const formData = new FormData();
+    const ext = audioBlob.type.includes('mp4')
+      ? 'm4a'
+      : audioBlob.type.includes('ogg')
+        ? 'ogg'
+        : 'webm';
+    formData.append('audio', audioBlob, `voice-note.${ext}`);
+    formData.append('toUserId', toUserId);
+    formData.append('duration', String(Math.max(1, Math.round(duration))));
+
+    const res = await api.post(`/conversations/${conversationId}/voice`, formData);
+    return unwrap<ChatMessage>(res.data);
+  },
+
   markConversationRead: async (conversationId: string) => {
     const res = await api.post(`/conversations/${conversationId}/read`);
     return unwrap<{ success: boolean }>(res.data);

@@ -24,6 +24,10 @@ import {
   RotateCcw,
   ArrowLeft,
   Smile,
+  Mic,
+  Pause,
+  Play,
+  Trash2,
 } from 'lucide-react';
 import { StudentProfileModal } from './StudentProfileModal';
 import { useSocket } from '../../../hooks/useSocket';
@@ -73,6 +77,168 @@ function writeBlockedCache(users: StudyBuddyStudent[]) {
   }
 }
 
+function formatAudioDuration(seconds: number): string {
+  const safe = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(safe / 60);
+  const secs = safe % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+function parseVoiceNoteText(text: string): { duration: number; url: string } | null {
+  const match = text.match(/^\[VOICE_NOTE:(\d+)\](.+)$/s);
+  if (!match) return null;
+  const duration = Number(match[1]) || 1;
+  const rawUrl = match[2].trim();
+  if (rawUrl.startsWith('local://')) {
+    const key = rawUrl.slice('local://'.length);
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) return { duration, url: stored };
+    } catch {
+      // Ignore storage error
+    }
+  }
+  return { duration, url: rawUrl };
+}
+
+function formatLastMessagePreview(lastMessage: string | null): string {
+  if (!lastMessage) return 'Connected. Say hello!';
+  if (lastMessage.startsWith('[VOICE_NOTE:')) return '🎤 Voice note';
+  return lastMessage;
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') resolve(reader.result);
+      else reject(new Error('Failed to encode audio'));
+    };
+    reader.onerror = () => reject(new Error('Failed to read audio'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+const WAVE_BARS = [35, 65, 90, 50, 80, 100, 60, 45, 85, 70, 95, 55, 75, 40, 65, 50];
+
+function VoiceNotePlayer({
+  url,
+  duration,
+  isMine,
+}: {
+  url: string;
+  duration: number;
+  isMine?: boolean;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [actualDuration, setActualDuration] = useState(duration);
+  const [playError, setPlayError] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [url]);
+
+  const togglePlay = async () => {
+    if (url.startsWith('local://')) {
+      setPlayError(true);
+      return;
+    }
+
+    if (!audioRef.current) {
+      const audio = new Audio(url);
+      audio.onloadedmetadata = () => {
+        if (Number.isFinite(audio.duration) && audio.duration > 0) {
+          setActualDuration(audio.duration);
+        }
+      };
+      audio.ontimeupdate = () => {
+        setCurrentTime(audio.currentTime);
+      };
+      audio.onended = () => {
+        setPlaying(false);
+        setCurrentTime(0);
+      };
+      audio.onerror = () => {
+        setPlaying(false);
+        setPlayError(true);
+      };
+      audioRef.current = audio;
+    }
+
+    const audio = audioRef.current;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+    } else {
+      try {
+        setPlayError(false);
+        await audio.play();
+        setPlaying(true);
+      } catch {
+        setPlaying(false);
+        setPlayError(true);
+      }
+    }
+  };
+
+  const total = actualDuration > 0 ? actualDuration : duration || 1;
+  const progress = Math.min(1, currentTime / total);
+
+  return (
+    <div className="flex min-w-[200px] items-center gap-2.5 py-0.5">
+      <button
+        type="button"
+        onClick={() => void togglePlay()}
+        aria-label={playing ? 'Pause voice note' : 'Play voice note'}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${
+          isMine
+            ? 'bg-white/20 text-white hover:bg-white/30'
+            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+        }`}
+      >
+        {playing ? <Pause size={15} /> : <Play size={15} className="ml-0.5" />}
+      </button>
+
+      <div className="flex-1 space-y-1">
+        <div className="flex h-5 items-center gap-[3px]" aria-hidden="true">
+          {WAVE_BARS.map((height, idx) => {
+            const active = idx / WAVE_BARS.length <= progress;
+            return (
+              <span
+                key={idx}
+                className={`w-[3px] rounded-full transition-colors ${
+                  isMine
+                    ? active
+                      ? 'bg-white'
+                      : 'bg-white/40'
+                    : active
+                      ? 'bg-indigo-600 dark:bg-indigo-400'
+                      : 'bg-slate-300 dark:bg-slate-600'
+                }`}
+                style={{ height: `${height}%` }}
+              />
+            );
+          })}
+        </div>
+        <div
+          className={`flex items-center justify-between text-[10px] font-mono ${
+            isMine ? 'text-indigo-100' : 'text-slate-500 dark:text-slate-400'
+          }`}
+        >
+          <span>{playError ? 'Audio unavailable' : formatAudioDuration(playing ? currentTime : total)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function StudyBuddyPage() {
   const {
     isUserOnline,
@@ -85,7 +251,7 @@ export function StudyBuddyPage() {
     addNotificationListener,
   } = useSocket();
 
-  const [activeTab, setActiveTab] = useState<'discover' | 'requests' | 'chats'>('discover');
+  const [activeTab, setActiveTab] = useState<'chats' | 'discover' | 'requests'>('chats');
 
   // Discover state
   const [students, setStudents] = useState<StudyBuddyStudent[]>([]);
@@ -111,6 +277,9 @@ export function StudyBuddyPage() {
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [loadingChats, setLoadingChats] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
 
   // Modals state
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -142,9 +311,34 @@ export function StudyBuddyPage() {
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const userClosedChatRef = useRef(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingDurationRef = useRef(0);
+  const recordingDiscardRef = useRef(false);
+  const pendingVoiceBlobsRef = useRef<
+    Map<string, { blob: Blob; duration: number; previewUrl: string }>
+  >(new Map());
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   useClickOutside(menuRef, closeMenu, menuOpen);
+
+  const handleCloseChat = useCallback(() => {
+    userClosedChatRef.current = true;
+    setMenuOpen(false);
+    setEmojiPickerOpen(false);
+    setActiveConversation(null);
+    setMessages([]);
+  }, []);
+
+  const handleSelectConversation = useCallback((conv: ConversationItem) => {
+    userClosedChatRef.current = false;
+    setMenuOpen(false);
+    setEmojiPickerOpen(false);
+    setActiveConversation(conv);
+  }, []);
 
   const insertChatEmoji = (emoji: string) => {
     const input = messageInputRef.current;
@@ -298,6 +492,7 @@ export function StudyBuddyPage() {
           const updatedMatch = data.find((c) => c.id === current.id);
           if (updatedMatch) return updatedMatch;
         }
+        if (userClosedChatRef.current) return null;
         return data.length > 0 && window.innerWidth >= 768 ? data[0] : null;
       });
     } catch (err) {
@@ -318,7 +513,26 @@ export function StudyBuddyPage() {
   useEffect(() => {
     setMenuOpen(false);
     setEmojiPickerOpen(false);
+    setRecordingError(null);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      recordingDiscardRef.current = true;
+      mediaRecorderRef.current.stop();
+    }
   }, [activeConversationId]);
+
+  useEffect(() => {
+    const pendingBlobs = pendingVoiceBlobsRef.current;
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        recordingDiscardRef.current = true;
+        mediaRecorderRef.current.stop();
+      }
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+      pendingBlobs.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+      pendingBlobs.clear();
+    };
+  }, []);
 
   // Fetch messages for active conversation
   useEffect(() => {
@@ -334,8 +548,12 @@ export function StudyBuddyPage() {
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
           );
           setMessages(ordered);
-          studyBuddyService.markConversationRead(activeConversationId!);
+          await studyBuddyService.markConversationRead(activeConversationId!);
           markConversationRead(activeConversationId!);
+          setConversations((prev) =>
+            prev.map((c) => (c.id === activeConversationId ? { ...c, unreadCount: 0 } : c)),
+          );
+          window.dispatchEvent(new Event('slotstudy-buddy-updated'));
         }
       } catch (err) {
         console.error('Messages error:', err);
@@ -389,7 +607,9 @@ export function StudyBuddyPage() {
             },
           ];
         });
-        studyBuddyService.markConversationRead(activeConversation.id);
+        void studyBuddyService.markConversationRead(activeConversation.id).then(() => {
+          window.dispatchEvent(new Event('slotstudy-buddy-updated'));
+        });
         markConversationRead(activeConversation.id);
       }
 
@@ -485,8 +705,10 @@ export function StudyBuddyPage() {
       await studyBuddyService.acceptFriendRequest(id);
       setIncomingRequests((prev) => prev.filter((r) => r.id !== id));
       fetchDiscover();
+      userClosedChatRef.current = false;
       setActiveTab('chats');
       fetchConversations();
+      window.dispatchEvent(new Event('slotstudy-buddy-updated'));
     } catch (err) {
       console.warn('Accept error:', err);
     }
@@ -497,6 +719,7 @@ export function StudyBuddyPage() {
       await studyBuddyService.declineFriendRequest(id);
       setIncomingRequests((prev) => prev.filter((r) => r.id !== id));
       fetchDiscover();
+      window.dispatchEvent(new Event('slotstudy-buddy-updated'));
       return true;
     } catch (err) {
       console.warn('Decline error:', err);
@@ -504,8 +727,232 @@ export function StudyBuddyPage() {
     }
   };
 
+  const sendVoiceNoteMessage = useCallback(
+    async (
+      convId: string,
+      recipientId: string,
+      audioBlob: Blob,
+      duration: number,
+      previewUrl: string,
+      existingTempId?: string,
+    ) => {
+      const tempId = existingTempId || `voice-${Date.now()}`;
+      pendingVoiceBlobsRef.current.set(tempId, { blob: audioBlob, duration, previewUrl });
+      const placeholderText = `[VOICE_NOTE:${duration}]${previewUrl}`;
+
+      if (!existingTempId) {
+        const optimistic: ChatMessage = {
+          id: tempId,
+          conversationId: convId,
+          senderId: 'me',
+          text: placeholderText,
+          createdAt: new Date().toISOString(),
+          isOutgoing: true,
+          status: 'sending',
+        };
+        setMessages((prev) => [...prev, optimistic]);
+      } else {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId ? { ...m, status: 'sending', error: undefined } : m,
+          ),
+        );
+      }
+
+      const finishVoiceSend = (saved: {
+        id: string;
+        text?: string;
+        createdAt: string;
+        readAt?: string | null;
+      }) => {
+        const finalText = saved.text || placeholderText;
+        setMessages((prev) => {
+          const alreadySynced = prev.some((m) => m.id === saved.id && m.id !== tempId);
+          if (alreadySynced) return prev.filter((m) => m.id !== tempId);
+          return prev.map((m) =>
+            m.id === tempId
+              ? {
+                  ...m,
+                  id: saved.id,
+                  text: finalText,
+                  createdAt: saved.createdAt,
+                  readAt: saved.readAt ?? m.readAt,
+                  status: 'sent',
+                  error: undefined,
+                }
+              : m,
+          );
+        });
+        setConversations((prev) => {
+          const index = prev.findIndex((c) => c.id === convId);
+          if (index === -1) return prev;
+          const updated = [...prev];
+          const conv = {
+            ...updated[index],
+            lastMessage: finalText,
+            lastMessageAt: saved.createdAt,
+          };
+          updated.splice(index, 1);
+          return [conv, ...updated];
+        });
+        pendingVoiceBlobsRef.current.delete(tempId);
+        URL.revokeObjectURL(previewUrl);
+      };
+
+      try {
+        const saved = await studyBuddyService.sendVoiceNote(
+          convId,
+          recipientId,
+          audioBlob,
+          duration,
+        );
+        finishVoiceSend(saved);
+      } catch (err) {
+        const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+        if (status === 404 || status === 405) {
+          try {
+            const dataUrl = await blobToDataUrl(audioBlob);
+            const storageKey = `slotstudy-vn-${Date.now()}`;
+            localStorage.setItem(storageKey, dataUrl);
+            const fallbackText = `[VOICE_NOTE:${duration}]local://${storageKey}`;
+            const saved = await studyBuddyService.sendMessage(convId, recipientId, fallbackText);
+            finishVoiceSend(saved);
+            return;
+          } catch {
+            // Fall through to mark failed
+          }
+        }
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId
+              ? { ...m, status: 'failed', error: getErrorMessage(err) }
+              : m,
+          ),
+        );
+      }
+    },
+    [],
+  );
+
+  const stopRecordingResources = useCallback(() => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+  }, []);
+
+  const startVoiceRecording = async () => {
+    if (!activeConversation || isRecording) return;
+    setRecordingError(null);
+
+    if (
+      typeof MediaRecorder === 'undefined' ||
+      !navigator.mediaDevices?.getUserMedia
+    ) {
+      setRecordingError('Voice note recording is not supported in this browser.');
+      return;
+    }
+
+    const convId = activeConversation.id;
+    const recipientId = activeConversation.otherUser.id;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+
+      const preferredTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg',
+      ];
+      const mimeType = preferredTypes.find((t) => MediaRecorder.isTypeSupported(t)) || '';
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+
+      audioChunksRef.current = [];
+      recordingDiscardRef.current = false;
+      recordingDurationRef.current = 0;
+      setRecordingDuration(0);
+      setEmojiPickerOpen(false);
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const shouldDiscard = recordingDiscardRef.current;
+        const duration = Math.max(1, recordingDurationRef.current);
+        const chunks = [...audioChunksRef.current];
+        const recordedType = recorder.mimeType || mimeType || 'audio/webm';
+        audioChunksRef.current = [];
+        stopRecordingResources();
+
+        if (shouldDiscard || chunks.length === 0) return;
+
+        const audioBlob = new Blob(chunks, { type: recordedType });
+        const previewUrl = URL.createObjectURL(audioBlob);
+        void sendVoiceNoteMessage(convId, recipientId, audioBlob, duration, previewUrl);
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(250);
+      setIsRecording(true);
+
+      recordingTimerRef.current = setInterval(() => {
+        recordingDurationRef.current += 1;
+        setRecordingDuration(recordingDurationRef.current);
+        if (recordingDurationRef.current >= 180) {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+          }
+        }
+      }, 1000);
+    } catch {
+      stopRecordingResources();
+      setRecordingError('Microphone access is needed to record a voice note.');
+    }
+  };
+
+  const cancelVoiceRecording = () => {
+    recordingDiscardRef.current = true;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    } else {
+      stopRecordingResources();
+    }
+  };
+
+  const stopAndSendVoiceRecording = () => {
+    recordingDiscardRef.current = false;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    } else {
+      stopRecordingResources();
+    }
+  };
+
   const handleSendMessage = async (retryMsg?: ChatMessage) => {
     if (!activeConversation) return;
+    if (retryMsg && pendingVoiceBlobsRef.current.has(retryMsg.id)) {
+      const pending = pendingVoiceBlobsRef.current.get(retryMsg.id)!;
+      void sendVoiceNoteMessage(
+        activeConversation.id,
+        activeConversation.otherUser.id,
+        pending.blob,
+        pending.duration,
+        pending.previewUrl,
+        retryMsg.id,
+      );
+      return;
+    }
     const textToSend = retryMsg ? retryMsg.text : inputText.trim();
     if (!textToSend) return;
 
@@ -699,6 +1146,7 @@ export function StudyBuddyPage() {
         type: 'success',
       });
       void fetchConversations();
+      window.dispatchEvent(new Event('slotstudy-buddy-updated'));
     } catch (err) {
       setConfirmActionError(getErrorMessage(err));
     } finally {
@@ -730,6 +1178,7 @@ export function StudyBuddyPage() {
         type: 'success',
       });
       void fetchConversations();
+      window.dispatchEvent(new Event('slotstudy-buddy-updated'));
     } catch (err) {
       setConfirmActionError(getErrorMessage(err));
     } finally {
@@ -858,6 +1307,29 @@ export function StudyBuddyPage() {
 
       {/* 3 Main Navigation Tabs */}
       <div className="mb-6 flex w-full border-b border-slate-200 dark:border-slate-800">
+        {(() => {
+          const totalUnreadChats = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+          return (
+            <button
+              onClick={() => setActiveTab('chats')}
+              className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-3 text-xs font-semibold transition sm:gap-2 sm:px-5 sm:text-sm ${
+                activeTab === 'chats'
+                  ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
+              }`}
+            >
+              <MessageSquare size={16} className="shrink-0 sm:h-[17px] sm:w-[17px]" />
+              <span className="sm:hidden">Chats</span>
+              <span className="hidden sm:inline">Active Chats</span>
+              {totalUnreadChats > 0 && (
+                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-bold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
+                  {totalUnreadChats}
+                </span>
+              )}
+            </button>
+          );
+        })()}
+
         <button
           onClick={() => setActiveTab('discover')}
           className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-3 text-xs font-semibold transition sm:gap-2 sm:px-5 sm:text-sm ${
@@ -886,19 +1358,6 @@ export function StudyBuddyPage() {
               {incomingRequests.length + outgoingRequests.length}
             </span>
           )}
-        </button>
-
-        <button
-          onClick={() => setActiveTab('chats')}
-          className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-3 text-xs font-semibold transition sm:gap-2 sm:px-5 sm:text-sm ${
-            activeTab === 'chats'
-              ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
-          }`}
-        >
-          <MessageSquare size={16} className="shrink-0 sm:h-[17px] sm:w-[17px]" />
-          <span className="sm:hidden">Chats</span>
-          <span className="hidden sm:inline">Active Chats</span>
         </button>
       </div>
 
@@ -1546,7 +2005,8 @@ export function StudyBuddyPage() {
                   return (
                     <button
                       key={conv.id}
-                      onClick={() => setActiveConversation(conv)}
+                      type="button"
+                      onClick={() => handleSelectConversation(conv)}
                       className={`mb-1.5 flex w-full items-center gap-3 rounded-2xl p-3 text-left transition ${
                         isSelected
                           ? 'bg-indigo-50 dark:bg-indigo-950/40'
@@ -1590,7 +2050,7 @@ export function StudyBuddyPage() {
                             {isTyping ? (
                               <span className="font-semibold text-indigo-600">Typing...</span>
                             ) : (
-                              conv.lastMessage || 'Connected. Say hello!'
+                              formatLastMessagePreview(conv.lastMessage)
                             )}
                           </p>
                           {conv.unreadCount > 0 && (
@@ -1619,7 +2079,9 @@ export function StudyBuddyPage() {
                 <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={() => setActiveConversation(null)}
+                      type="button"
+                      onClick={handleCloseChat}
+                      aria-label="Back to conversations"
                       className="mr-1 rounded-xl p-1.5 text-slate-500 hover:bg-slate-100 md:hidden dark:hover:bg-slate-800"
                     >
                       <ArrowLeft size={18} />
@@ -1663,67 +2125,89 @@ export function StudyBuddyPage() {
                     </button>
                   </div>
 
-                  <div ref={menuRef} className="relative">
+                  <div className="flex items-center gap-1">
+                    <div ref={menuRef} className="relative">
+                      <button
+                        type="button"
+                        aria-label="Conversation actions"
+                        aria-expanded={menuOpen}
+                        aria-haspopup="menu"
+                        onClick={() => setMenuOpen((open) => !open)}
+                        className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      >
+                        <MoreVertical size={18} />
+                      </button>
+
+                      {menuOpen && (
+                        <div
+                          role="menu"
+                          className="absolute right-0 top-10 z-20 w-48 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+                        >
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={handleCloseChat}
+                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                          >
+                            <X size={14} className="text-slate-400" />
+                            <span>Close chat</span>
+                          </button>
+                          <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setMenuOpen(false);
+                              setReportTarget(activeConversation.otherUser);
+                              setReportReason('');
+                              setReportError(null);
+                              setAlsoBlockOnReport(false);
+                              setReportModalOpen(true);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                          >
+                            <ShieldAlert size={14} className="text-amber-500" />
+                            <span>Report user</span>
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setMenuOpen(false);
+                              setConfirmActionError(null);
+                              setBlockConfirmTarget(activeConversation.otherUser);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                          >
+                            <AlertTriangle size={14} />
+                            <span>Block user</span>
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setMenuOpen(false);
+                              setConfirmActionError(null);
+                              setUnfriendConfirmTarget(activeConversation.otherUser);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                          >
+                            <UserX size={14} />
+                            <span>Unfriend</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                     <button
                       type="button"
-                      aria-label="Conversation actions"
-                      aria-expanded={menuOpen}
-                      aria-haspopup="menu"
-                      onClick={() => setMenuOpen((open) => !open)}
-                      className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      onClick={handleCloseChat}
+                      aria-label="Close chat"
+                      title="Close chat"
+                      className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                     >
-                      <MoreVertical size={18} />
+                      <X size={18} />
                     </button>
-
-                    {menuOpen && (
-                      <div
-                        role="menu"
-                        className="absolute right-0 top-10 z-20 w-48 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-900"
-                      >
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setReportTarget(activeConversation.otherUser);
-                            setReportReason('');
-                            setReportError(null);
-                            setAlsoBlockOnReport(false);
-                            setReportModalOpen(true);
-                          }}
-                          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                        >
-                          <ShieldAlert size={14} className="text-amber-500" />
-                          <span>Report user</span>
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setConfirmActionError(null);
-                            setBlockConfirmTarget(activeConversation.otherUser);
-                          }}
-                          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
-                        >
-                          <AlertTriangle size={14} />
-                          <span>Block user</span>
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setConfirmActionError(null);
-                            setUnfriendConfirmTarget(activeConversation.otherUser);
-                          }}
-                          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-                        >
-                          <UserX size={14} />
-                          <span>Unfriend</span>
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -1741,6 +2225,7 @@ export function StudyBuddyPage() {
                     messages.map((m) => {
                       const isMine = m.isOutgoing;
                       const isFailed = m.status === 'failed';
+                      const voiceNote = parseVoiceNoteText(m.text);
 
                       return (
                         <div
@@ -1756,7 +2241,15 @@ export function StudyBuddyPage() {
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50 rounded-bl-none'
                             }`}
                           >
-                            <p className="break-words leading-relaxed whitespace-pre-wrap">{m.text}</p>
+                            {voiceNote ? (
+                              <VoiceNotePlayer
+                                url={voiceNote.url}
+                                duration={voiceNote.duration}
+                                isMine={isMine}
+                              />
+                            ) : (
+                              <p className="break-words leading-relaxed whitespace-pre-wrap">{m.text}</p>
+                            )}
                             <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-75">
                               <span>
                                 {new Date(m.createdAt).toLocaleTimeString([], {
@@ -1795,7 +2288,23 @@ export function StudyBuddyPage() {
 
                 {/* Input Bar */}
                 <div className="relative border-t border-slate-200 p-3 dark:border-slate-800">
-                  {emojiPickerOpen && (
+                  {recordingError && (
+                    <div
+                      role="alert"
+                      className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+                    >
+                      <span>{recordingError}</span>
+                      <button
+                        type="button"
+                        onClick={() => setRecordingError(null)}
+                        aria-label="Dismiss microphone error"
+                        className="rounded p-0.5 hover:bg-rose-100 dark:hover:bg-rose-900/40"
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  )}
+                  {emojiPickerOpen && !isRecording && (
                     <div className="absolute bottom-full right-3 mb-2 flex gap-1 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-800">
                       {CHAT_EMOJIS.map((emoji) => (
                         <button
@@ -1810,47 +2319,97 @@ export function StudyBuddyPage() {
                       ))}
                     </div>
                   )}
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <input
-                      ref={messageInputRef}
-                      type="text"
-                      placeholder="Type a message..."
-                      value={inputText}
-                      maxLength={2000}
-                      onChange={(e) => {
-                        setInputText(e.target.value);
-                        startTyping(activeConversation.otherUser.id);
-                        if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-                        typingTimerRef.current = setTimeout(() => {
-                          stopTyping(activeConversation.otherUser.id);
-                        }, 2000);
-                      }}
-                      className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
-                    />
 
-                    <button
-                      type="button"
-                      aria-label="Choose an emoji"
-                      aria-expanded={emojiPickerOpen}
-                      onClick={() => setEmojiPickerOpen((open) => !open)}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800"
+                  {isRecording ? (
+                    <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/70 px-3.5 py-2 dark:border-rose-900/60 dark:bg-rose-950/30">
+                      <span className="relative flex h-2.5 w-2.5 shrink-0">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-600" />
+                      </span>
+                      <span className="font-mono text-xs font-bold text-rose-700 dark:text-rose-300">
+                        Recording {formatAudioDuration(recordingDuration)}
+                      </span>
+                      <div className="flex flex-1 items-center gap-1 overflow-hidden h-4" aria-hidden="true">
+                        {WAVE_BARS.slice(0, 12).map((h, idx) => (
+                          <span
+                            key={idx}
+                            className="w-1 rounded-full bg-rose-400/70 dark:bg-rose-500/70 animate-pulse"
+                            style={{ height: `${h}%`, animationDelay: `${idx * 75}ms` }}
+                          />
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={cancelVoiceRecording}
+                        aria-label="Discard voice note"
+                        title="Discard voice note"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-rose-600 transition hover:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-900/40"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={stopAndSendVoiceRecording}
+                        aria-label="Send voice note"
+                        title="Send voice note"
+                        className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-indigo-600 px-3 text-xs font-bold text-white transition hover:bg-indigo-700"
+                      >
+                        <Send size={14} />
+                        <span>Send</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }}
+                      className="flex items-center gap-2"
                     >
-                      <Smile size={18} />
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!inputText.trim()}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white transition hover:bg-indigo-700 disabled:opacity-40"
-                    >
-                      <Send size={16} />
-                    </button>
-                  </form>
+                      <input
+                        ref={messageInputRef}
+                        type="text"
+                        placeholder="Type a message..."
+                        value={inputText}
+                        maxLength={2000}
+                        onChange={(e) => {
+                          setInputText(e.target.value);
+                          startTyping(activeConversation.otherUser.id);
+                          if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+                          typingTimerRef.current = setTimeout(() => {
+                            stopTyping(activeConversation.otherUser.id);
+                          }, 2000);
+                        }}
+                        className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
+                      />
+
+                      <button
+                        type="button"
+                        aria-label="Choose an emoji"
+                        aria-expanded={emojiPickerOpen}
+                        onClick={() => setEmojiPickerOpen((open) => !open)}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800"
+                      >
+                        <Smile size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Record voice note"
+                        title="Record voice note"
+                        onClick={() => void startVoiceRecording()}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800"
+                      >
+                        <Mic size={18} />
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!inputText.trim()}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white transition hover:bg-indigo-700 disabled:opacity-40"
+                      >
+                        <Send size={16} />
+                      </button>
+                    </form>
+                  )}
                 </div>
               </>
             ) : (
