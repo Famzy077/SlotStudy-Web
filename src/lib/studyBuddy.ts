@@ -40,6 +40,7 @@ export interface FriendRequestItem {
 export interface FriendRequestsResponse {
   incoming: FriendRequestItem[];
   outgoing: FriendRequestItem[];
+  blocked?: FriendRequestItem[];
 }
 
 export interface ConversationItem {
@@ -104,6 +105,11 @@ export const studyBuddyService = {
     return unwrap<FriendRequestsResponse>(res.data);
   },
 
+  getBlockedUsers: async (): Promise<FriendRequestItem[]> => {
+    const res = await api.get('/friends/blocked');
+    return unwrap<FriendRequestItem[]>(res.data);
+  },
+
   sendFriendRequest: async (userId: string) => {
     const res = await api.post('/friends/request', { userId });
     return unwrap<{ success: boolean; message: string; friendship: any }>(res.data);
@@ -148,6 +154,18 @@ export const studyBuddyService = {
       params: { cursor, limit },
     });
     return unwrap<MessagesResponse>(res.data);
+  },
+
+  sendMessage: async (
+    conversationId: string,
+    toUserId: string,
+    text: string,
+  ): Promise<ChatMessage> => {
+    const res = await api.post(`/conversations/${conversationId}/messages`, {
+      toUserId,
+      text,
+    });
+    return unwrap<ChatMessage>(res.data);
   },
 
   markConversationRead: async (conversationId: string) => {

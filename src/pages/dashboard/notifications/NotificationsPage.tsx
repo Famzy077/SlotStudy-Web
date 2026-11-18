@@ -6,29 +6,91 @@ import { useApiQuery, list } from '../../../hooks/useApiQuery';
 import { PageTitle, QueryNotice, LoadingLine, EmptyState } from '../../../components/common';
 import type { DataObject } from '../../../types';
 
+function updateNotificationCache(
+  current: unknown,
+  targetId?: string,
+): unknown {
+  const markItems = (items: DataObject[]) =>
+    items.map((item) =>
+      !targetId || String(item.id) === targetId
+        ? { ...item, isRead: true }
+        : item,
+    );
+
+  if (Array.isArray(current)) {
+    return markItems(current as DataObject[]);
+  }
+
+  if (current && typeof current === 'object') {
+    const record = current as Record<string, unknown>;
+    const rawItems = Array.isArray(record.data) ? (record.data as DataObject[]) : null;
+    if (!rawItems) return current;
+
+    const updatedItems = markItems(rawItems);
+    const prevUnread =
+      typeof record.unreadCount === 'number'
+        ? record.unreadCount
+        : rawItems.filter((item) => !item.readAt && !item.isRead).length;
+    const nextUnread = targetId ? Math.max(0, prevUnread - 1) : 0;
+
+    return {
+      ...record,
+      data: updatedItems,
+      unreadCount: nextUnread,
+    };
+  }
+
+  return current;
+}
+
 export function NotificationsPage() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState('All');
-  const result = useApiQuery<unknown>('notifications', '/notifications');
+  const [actionError, setActionError] = useState('');
+  const result = useApiQuery<unknown>('notifications', '/notifications', true, {
+    limit: '50',
+  });
   const notifications = list<DataObject>(result.data, 'notifications');
-  const visible = notifications.filter((notification) => filter === 'All' || (!notification.readAt && !notification.isRead));
+  const unreadCount = notifications.filter(
+    (notification) => !notification.readAt && !notification.isRead,
+  ).length;
+  const visible = notifications.filter(
+    (notification) => filter === 'All' || (!notification.readAt && !notification.isRead),
+  );
 
   async function markAllRead() {
+    setActionError('');
     try {
-      await api.patch('/notifications/read-all');
+      try {
+        await api.patch('/notifications/read-all');
+      } catch {
+        await api.post('/notifications/read', {});
+      }
+      queryClient.setQueriesData({ queryKey: ['notifications'] }, (old) =>
+        updateNotificationCache(old),
+      );
       await queryClient.invalidateQueries({ queryKey: ['notifications'] });
     } catch (error) {
-      window.alert(getErrorMessage(error));
+      setActionError(getErrorMessage(error));
     }
   }
 
   async function markRead(notification: DataObject) {
     if (!notification.id || notification.readAt || notification.isRead) return;
+    setActionError('');
+    const id = String(notification.id);
     try {
-      await api.patch(`/notifications/${notification.id}`);
+      try {
+        await api.patch(`/notifications/${id}`, { isRead: true });
+      } catch {
+        await api.post('/notifications/read', { ids: [id] });
+      }
+      queryClient.setQueriesData({ queryKey: ['notifications'] }, (old) =>
+        updateNotificationCache(old, id),
+      );
       await queryClient.invalidateQueries({ queryKey: ['notifications'] });
     } catch (error) {
-      window.alert(getErrorMessage(error));
+      setActionError(getErrorMessage(error));
     }
   }
 
@@ -45,14 +107,18 @@ export function NotificationsPage() {
         }
       />
       <QueryNotice error={result.error} />
+      {actionError && <div className="form-alert">{actionError}</div>}
       <div className="filter-tabs notification-filters">
-        {['All', 'Unread'].map((name) => (
+        {[
+          { key: 'All', label: `All (${notifications.length})` },
+          { key: 'Unread', label: `Unread (${unreadCount})` },
+        ].map((tab) => (
           <button
-            className={filter === name ? 'filter-active' : ''}
-            onClick={() => setFilter(name)}
-            key={name}
+            className={filter === tab.key ? 'filter-active' : ''}
+            onClick={() => setFilter(tab.key)}
+            key={tab.key}
           >
-            {name}
+            {tab.label}
           </button>
         ))}
       </div>

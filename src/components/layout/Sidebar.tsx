@@ -75,7 +75,7 @@ export const navigationLinks: NavSection[] = [
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
-  hasUnreadNotifications: boolean;
+  unreadNotificationCount: number;
   profileOpen: boolean;
   setProfileOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   onLogout: () => void;
@@ -84,7 +84,7 @@ interface SidebarProps {
 export function Sidebar({
   open,
   onClose,
-  hasUnreadNotifications,
+  unreadNotificationCount,
   profileOpen,
   setProfileOpen,
   onLogout,
@@ -174,7 +174,11 @@ export function Sidebar({
             <div className="nav-link-content">
               <div className="nav-link-title-row">
                 <span className="nav-link-name">Notifications</span>
-                {hasUnreadNotifications && <span className="notification-dot" />}
+                {unreadNotificationCount > 0 && (
+                  <span className="notification-badge notification-badge-inline">
+                    {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                  </span>
+                )}
               </div>
             </div>
           </Link>

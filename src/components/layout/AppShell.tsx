@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, ChevronRight, FileText, GraduationCap, Search, Users } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useClickOutside } from '../../hooks/useClickOutside';
+import { useSocket } from '../../hooks/useSocket';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { MobileNav } from './MobileNav';
@@ -48,18 +49,37 @@ export function AppShell() {
     queryFn: async () => unwrap<Record<string, unknown>>((await api.get('/dashboard')).data),
   });
 
+  const queryClient = useQueryClient();
+  const { addNotificationListener } = useSocket();
+
   const notificationsQuery = useQuery({
-    queryKey: ['notifications', undefined],
+    queryKey: ['notifications', { limit: '50' }],
     queryFn: async () =>
-      unwrap<unknown>((await api.get('/notifications', { params: { limit: 10 } })).data),
+      unwrap<unknown>((await api.get('/notifications', { params: { limit: '50' } })).data),
   });
+
+  useEffect(() => {
+    const unsub = addNotificationListener(() => {
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    });
+    return unsub;
+  }, [addNotificationListener, queryClient]);
 
   const streak = getStat(dashboardStats.data, 'streak.current');
   const xp = getStat(dashboardStats.data, 'xp.total');
   const notifications = getNotifications(notificationsQuery.data);
-  const hasUnreadNotifications = notifications.some(
-    (notification) => notification.isRead === false,
-  );
+  const unreadFromApi =
+    notificationsQuery.data &&
+    typeof notificationsQuery.data === 'object' &&
+    typeof (notificationsQuery.data as { unreadCount?: unknown }).unreadCount === 'number'
+      ? (notificationsQuery.data as { unreadCount: number }).unreadCount
+      : null;
+  const unreadNotificationCount =
+    unreadFromApi !== null
+      ? unreadFromApi
+      : notifications.filter(
+          (notification) => !notification.readAt && notification.isRead === false,
+        ).length;
 
   const title =
     pathname === '/dashboard'
@@ -181,7 +201,7 @@ export function AppShell() {
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        hasUnreadNotifications={hasUnreadNotifications}
+        unreadNotificationCount={unreadNotificationCount}
         profileOpen={profileOpen}
         setProfileOpen={setProfileOpen}
         onLogout={handleLogout}
@@ -194,7 +214,7 @@ export function AppShell() {
           xp={xp}
           dark={dark}
           setTheme={setTheme}
-          hasUnreadNotifications={hasUnreadNotifications}
+          unreadNotificationCount={unreadNotificationCount}
           onOpenMenu={() => setSidebarOpen(true)}
           onOpenSearch={() => setSearchOpen(true)}
           topProfileOpen={topProfileOpen}

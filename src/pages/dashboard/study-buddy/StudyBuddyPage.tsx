@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import axios from 'axios';
 import {
   Users,
   UserCheck,
@@ -10,6 +11,7 @@ import {
   Clock,
   Check,
   CheckCheck,
+  CheckCircle2,
   Send,
   MoreVertical,
   AlertTriangle,
@@ -25,6 +27,9 @@ import {
 } from 'lucide-react';
 import { StudentProfileModal } from './StudentProfileModal';
 import { useSocket } from '../../../hooks/useSocket';
+import { useClickOutside } from '../../../hooks/useClickOutside';
+import api, { getErrorMessage } from '../../../lib/api';
+import { useAuth } from '../../../lib/auth';
 import {
   studyBuddyService,
   type StudyBuddyStudent,
@@ -43,6 +48,30 @@ const POPULAR_SCHOOLS = [
   'Ahmadu Bello University (ABU)',
 ];
 const CHAT_EMOJIS = ['😀', '😂', '😊', '😍', '👍', '🙏', '🎉', '❤️'];
+
+function getBlockedStorageKey(): string {
+  const userId = useAuth.getState().user?.id;
+  return userId ? `slotstudy-blocked-users-${userId}` : 'slotstudy-blocked-users';
+}
+
+function readBlockedCache(): StudyBuddyStudent[] {
+  try {
+    const raw = localStorage.getItem(getBlockedStorageKey());
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeBlockedCache(users: StudyBuddyStudent[]) {
+  try {
+    localStorage.setItem(getBlockedStorageKey(), JSON.stringify(users));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
 
 export function StudyBuddyPage() {
   const {
@@ -70,7 +99,8 @@ export function StudyBuddyPage() {
   // Requests state
   const [incomingRequests, setIncomingRequests] = useState<FriendRequestItem[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<FriendRequestItem[]>([]);
-  const [requestSegment, setRequestSegment] = useState<'all' | 'incoming' | 'outgoing'>('all');
+  const [blockedUsers, setBlockedUsers] = useState<StudyBuddyStudent[]>(() => readBlockedCache());
+  const [requestSegment, setRequestSegment] = useState<'all' | 'incoming' | 'outgoing' | 'blocked'>('all');
   const [loadingRequests, setLoadingRequests] = useState(false);
 
   // Chats state
@@ -86,6 +116,18 @@ export function StudyBuddyPage() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<StudyBuddyStudent | null>(null);
+  const [alsoBlockOnReport, setAlsoBlockOnReport] = useState(false);
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [blockConfirmTarget, setBlockConfirmTarget] = useState<StudyBuddyStudent | null>(null);
+  const [unfriendConfirmTarget, setUnfriendConfirmTarget] = useState<StudyBuddyStudent | null>(null);
+  const [confirmActionLoading, setConfirmActionLoading] = useState(false);
+  const [confirmActionError, setConfirmActionError] = useState<string | null>(null);
+  const [actionBanner, setActionBanner] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
   const [cancelConfirmTarget, setCancelConfirmTarget] = useState<{ id: string; name: string } | null>(null);
   const [declineConfirmTarget, setDeclineConfirmTarget] = useState<FriendRequestItem | null>(null);
   const [profileTarget, setProfileTarget] = useState<StudyBuddyStudent | null>(null);
@@ -99,6 +141,10 @@ export function StudyBuddyPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  useClickOutside(menuRef, closeMenu, menuOpen);
 
   const insertChatEmoji = (emoji: string) => {
     const input = messageInputRef.current;
@@ -194,20 +240,40 @@ export function StudyBuddyPage() {
   }, [activeTab, fetchDiscover]);
 
   // ──────────────────────────────────────────────
-  // Fetch Requests
+  // Fetch Requests & Blocked Users
   // ──────────────────────────────────────────────
+  const fetchBlockedUsers = useCallback(async () => {
+    try {
+      const data = await studyBuddyService.getBlockedUsers();
+      if (Array.isArray(data)) {
+        const users = data.map((item) => item.user).filter(Boolean);
+        setBlockedUsers(users);
+        writeBlockedCache(users);
+      }
+    } catch {
+      // If backend doesn't expose GET /friends/blocked yet, keep existing/cached list
+    }
+  }, []);
+
   const fetchRequests = useCallback(async () => {
     try {
       setLoadingRequests(true);
       const data = await studyBuddyService.getRequests();
       setIncomingRequests(data.incoming);
       setOutgoingRequests(data.outgoing);
+      if (Array.isArray(data.blocked)) {
+        const users = data.blocked.map((item) => item.user).filter(Boolean);
+        setBlockedUsers(users);
+        writeBlockedCache(users);
+      } else {
+        void fetchBlockedUsers();
+      }
     } catch (err) {
       console.error('Requests error:', err);
     } finally {
       setLoadingRequests(false);
     }
-  }, []);
+  }, [fetchBlockedUsers]);
 
   useEffect(() => {
     fetchRequests();
@@ -227,15 +293,19 @@ export function StudyBuddyPage() {
       setLoadingChats(true);
       const data = await studyBuddyService.getConversations();
       setConversations(data);
-      if (data.length > 0 && !activeConversation && window.innerWidth >= 768) {
-        setActiveConversation(data[0]);
-      }
+      setActiveConversation((current) => {
+        if (current) {
+          const updatedMatch = data.find((c) => c.id === current.id);
+          if (updatedMatch) return updatedMatch;
+        }
+        return data.length > 0 && window.innerWidth >= 768 ? data[0] : null;
+      });
     } catch (err) {
       console.error('Conversations error:', err);
     } finally {
       setLoadingChats(false);
     }
-  }, [activeConversation]);
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'chats') {
@@ -243,19 +313,29 @@ export function StudyBuddyPage() {
     }
   }, [activeTab, fetchConversations]);
 
+  const activeConversationId = activeConversation?.id;
+
+  useEffect(() => {
+    setMenuOpen(false);
+    setEmojiPickerOpen(false);
+  }, [activeConversationId]);
+
   // Fetch messages for active conversation
   useEffect(() => {
-    if (!activeConversation) return;
+    if (!activeConversationId) return;
 
     let cancelled = false;
     async function load() {
       try {
         setLoadingMessages(true);
-        const data = await studyBuddyService.getMessages(activeConversation!.id, undefined, 50);
+        const data = await studyBuddyService.getMessages(activeConversationId!, undefined, 50);
         if (!cancelled) {
-          setMessages(data.messages);
-          studyBuddyService.markConversationRead(activeConversation!.id);
-          markConversationRead(activeConversation!.id);
+          const ordered = [...data.messages].sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+          setMessages(ordered);
+          studyBuddyService.markConversationRead(activeConversationId!);
+          markConversationRead(activeConversationId!);
         }
       } catch (err) {
         console.error('Messages error:', err);
@@ -268,7 +348,7 @@ export function StudyBuddyPage() {
     return () => {
       cancelled = true;
     };
-  }, [activeConversation, markConversationRead]);
+  }, [activeConversationId, markConversationRead]);
 
   // Real-time live listeners
   useEffect(() => {
@@ -455,80 +535,253 @@ export function StudyBuddyPage() {
       );
     }
 
+    const convId = activeConversation.id;
+    const recipientId = activeConversation.otherUser.id;
+
+    const finalizeSent = (saved: { id: string; createdAt: string; readAt?: string | null }) => {
+      setMessages((prev) => {
+        const alreadySyncedBySocket = prev.some((m) => m.id === saved.id && m.id !== tempId);
+        if (alreadySyncedBySocket) {
+          return prev.filter((m) => m.id !== tempId);
+        }
+        return prev.map((m) =>
+          m.id === tempId
+            ? {
+                ...m,
+                id: saved.id,
+                createdAt: saved.createdAt,
+                readAt: saved.readAt ?? m.readAt,
+                status: 'sent',
+                error: undefined,
+              }
+            : m,
+        );
+      });
+      setConversations((prev) => {
+        const index = prev.findIndex((c) => c.id === convId);
+        if (index === -1) return prev;
+        const updated = [...prev];
+        const conv = {
+          ...updated[index],
+          lastMessage: textToSend,
+          lastMessageAt: saved.createdAt,
+        };
+        updated.splice(index, 1);
+        return [conv, ...updated];
+      });
+    };
+
     try {
-      const res = await sendMessage(activeConversation.otherUser.id, textToSend);
-      if (res.success && res.data) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempId
-              ? {
-                  ...m,
-                  id: res.data!.id,
-                  createdAt: res.data!.createdAt,
-                  status: 'sent',
-                }
-              : m,
-          ),
-        );
-      } else {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempId
-              ? { ...m, status: 'failed', error: res.error || 'Failed to send message.' }
-              : m,
-          ),
-        );
+      const saved = await studyBuddyService.sendMessage(convId, recipientId, textToSend);
+      finalizeSent(saved);
+    } catch (httpErr) {
+      const status = axios.isAxiosError(httpErr) ? httpErr.response?.status : undefined;
+      if (status === 404 || status === 405) {
+        // Fallback when backend REST message endpoint is unavailable
+        try {
+          await api.get('/conversations');
+        } catch {
+          // Ignore refresh probe error and let socket fallback try
+        }
+        try {
+          const res = await sendMessage(recipientId, textToSend);
+          if (res.success && res.data) {
+            finalizeSent(res.data);
+          } else {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === tempId
+                  ? { ...m, status: 'failed', error: res.error || 'Failed to send message.' }
+                  : m,
+              ),
+            );
+          }
+        } catch {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === tempId
+                ? { ...m, status: 'failed', error: 'Message could not be sent. Please retry.' }
+                : m,
+            ),
+          );
+        }
+        return;
       }
-    } catch {
+
       setMessages((prev) =>
         prev.map((m) =>
           m.id === tempId
-            ? { ...m, status: 'failed', error: 'Message could not be sent. Please retry.' }
+            ? { ...m, status: 'failed', error: getErrorMessage(httpErr) }
             : m,
         ),
       );
     }
   };
 
-  const handleBlockUser = async () => {
-    if (!activeConversation) return;
-    if (confirm(`Block ${activeConversation.otherUser.name}? They will not be able to message you.`)) {
-      try {
-        await studyBuddyService.blockUser(activeConversation.otherUser.id);
-        setActiveConversation(null);
-        fetchConversations();
-      } catch (err) {
-        console.error('Block error:', err);
+  const removeConversationForUser = useCallback(
+    (targetUserId: string) => {
+      const remaining = conversations.filter((c) => c.otherUser.id !== targetUserId);
+      setConversations(remaining);
+      setActiveConversation((current) => {
+        if (current && current.otherUser.id !== targetUserId) {
+          return current;
+        }
+        return remaining.length > 0 && window.innerWidth >= 768 ? remaining[0] : null;
+      });
+      if (activeConversation?.otherUser.id === targetUserId) {
+        setMessages([]);
       }
+    },
+    [conversations, activeConversation],
+  );
+
+  const addBlockedUserToList = useCallback((student: StudyBuddyStudent) => {
+    setBlockedUsers((prev) => {
+      const next = [
+        { ...student, friendshipStatus: 'BLOCKED' as const },
+        ...prev.filter((u) => u.id !== student.id),
+      ];
+      writeBlockedCache(next);
+      return next;
+    });
+  }, []);
+
+  const handleUnblockUser = async (student: StudyBuddyStudent) => {
+    if (actioningUserIds.has(student.id)) return;
+    try {
+      setActioningUserIds((prev) => new Set(prev).add(student.id));
+      await studyBuddyService.unblockUser(student.id);
+      setBlockedUsers((prev) => {
+        const next = prev.filter((u) => u.id !== student.id);
+        writeBlockedCache(next);
+        return next;
+      });
+      setActionBanner({
+        message: `${student.name} has been unblocked. You can reconnect in Discover.`,
+        type: 'success',
+      });
+      void fetchDiscover();
+      void fetchRequests();
+    } catch (err) {
+      setActionBanner({
+        message: getErrorMessage(err),
+        type: 'error',
+      });
+    } finally {
+      setActioningUserIds((prev) => {
+        const next = new Set(prev);
+        next.delete(student.id);
+        return next;
+      });
     }
   };
 
-  const handleUnfriendUser = async () => {
-    if (!activeConversation) return;
-    if (confirm(`Remove ${activeConversation.otherUser.name} as a study buddy?`)) {
-      try {
-        await studyBuddyService.unfriend(activeConversation.otherUser.id);
-        setActiveConversation(null);
-        fetchConversations();
-      } catch (err) {
-        console.error('Unfriend error:', err);
-      }
+  const handleConfirmBlockUser = async () => {
+    if (!blockConfirmTarget || confirmActionLoading) return;
+    const target = blockConfirmTarget;
+    try {
+      setConfirmActionLoading(true);
+      setConfirmActionError(null);
+      await studyBuddyService.blockUser(target.id);
+      removeConversationForUser(target.id);
+      addBlockedUserToList(target);
+      setStudents((prev) => prev.filter((s) => s.id !== target.id));
+      setIncomingRequests((prev) => prev.filter((r) => r.user.id !== target.id));
+      setOutgoingRequests((prev) => prev.filter((r) => r.user.id !== target.id));
+      setPendingFriendIds((prev) => {
+        const next = new Set(prev);
+        next.delete(target.id);
+        return next;
+      });
+      setBlockConfirmTarget(null);
+      setActionBanner({
+        message: `${target.name} has been blocked.`,
+        type: 'success',
+      });
+      void fetchConversations();
+    } catch (err) {
+      setConfirmActionError(getErrorMessage(err));
+    } finally {
+      setConfirmActionLoading(false);
+    }
+  };
+
+  const handleConfirmUnfriendUser = async () => {
+    if (!unfriendConfirmTarget || confirmActionLoading) return;
+    const target = unfriendConfirmTarget;
+    try {
+      setConfirmActionLoading(true);
+      setConfirmActionError(null);
+      await studyBuddyService.unfriend(target.id);
+      removeConversationForUser(target.id);
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === target.id ? { ...s, friendshipStatus: 'NONE', friendshipId: null } : s,
+        ),
+      );
+      setPendingFriendIds((prev) => {
+        const next = new Set(prev);
+        next.delete(target.id);
+        return next;
+      });
+      setUnfriendConfirmTarget(null);
+      setActionBanner({
+        message: `${target.name} was removed from your study buddies.`,
+        type: 'success',
+      });
+      void fetchConversations();
+    } catch (err) {
+      setConfirmActionError(getErrorMessage(err));
+    } finally {
+      setConfirmActionLoading(false);
     }
   };
 
   const handleReportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeConversation || !reportReason.trim()) return;
+    const targetUser = reportTarget || activeConversation?.otherUser;
+    if (!targetUser || submittingReport) return;
+
+    const trimmedReason = reportReason.trim();
+    if (trimmedReason.length < 3) {
+      setReportError('Please provide at least 3 characters describing the issue.');
+      return;
+    }
+
     try {
+      setSubmittingReport(true);
+      setReportError(null);
       await studyBuddyService.createReport({
-        reportedId: activeConversation.otherUser.id,
-        reason: reportReason.trim(),
+        reportedId: targetUser.id,
+        reason: trimmedReason,
       });
+
+      let blockedToo = false;
+      if (alsoBlockOnReport) {
+        await studyBuddyService.blockUser(targetUser.id);
+        removeConversationForUser(targetUser.id);
+        addBlockedUserToList(targetUser);
+        setStudents((prev) => prev.filter((s) => s.id !== targetUser.id));
+        setIncomingRequests((prev) => prev.filter((r) => r.user.id !== targetUser.id));
+        setOutgoingRequests((prev) => prev.filter((r) => r.user.id !== targetUser.id));
+        blockedToo = true;
+        void fetchConversations();
+      }
+
       setReportModalOpen(false);
+      setReportTarget(null);
       setReportReason('');
-      alert('Report submitted. Our safety team will review it.');
+      setAlsoBlockOnReport(false);
+      setActionBanner({
+        message: blockedToo
+          ? `Report submitted and ${targetUser.name} has been blocked.`
+          : 'Report submitted. Our safety team will review it.',
+        type: 'success',
+      });
     } catch (err) {
-      console.error('Report error:', err);
+      setReportError(getErrorMessage(err));
+    } finally {
+      setSubmittingReport(false);
     }
   };
 
@@ -544,6 +797,7 @@ export function StudyBuddyPage() {
 
   const openSettingsModal = async () => {
     setSettingsModalOpen(true);
+    void fetchBlockedUsers();
     try {
       const data = await studyBuddyService.getSettings();
       setSettings(data);
@@ -647,6 +901,34 @@ export function StudyBuddyPage() {
           <span className="hidden sm:inline">Active Chats</span>
         </button>
       </div>
+
+      {actionBanner && (
+        <div
+          role={actionBanner.type === 'error' ? 'alert' : 'status'}
+          className={`mb-5 flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-xs font-semibold shadow-sm ${
+            actionBanner.type === 'success'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300'
+              : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            {actionBanner.type === 'success' ? (
+              <CheckCircle2 size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <AlertTriangle size={16} className="shrink-0 text-rose-600 dark:text-rose-400" />
+            )}
+            <span className="truncate">{actionBanner.message}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionBanner(null)}
+            aria-label="Dismiss notification"
+            className="shrink-0 rounded-lg p-1 opacity-70 transition hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {/* ──────────────────────────────────────────────
           TAB 1: DISCOVER
@@ -914,7 +1196,7 @@ export function StudyBuddyPage() {
         <div className="space-y-6">
           {/* Segment Filter Pills */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex gap-1.5 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+            <div className="flex flex-wrap gap-1.5 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
               <button
                 onClick={() => setRequestSegment('all')}
                 className={`rounded-lg px-3.5 py-2 text-xs font-bold transition ${
@@ -944,6 +1226,16 @@ export function StudyBuddyPage() {
                 }`}
               >
                 Sent ({outgoingRequests.length})
+              </button>
+              <button
+                onClick={() => setRequestSegment('blocked')}
+                className={`rounded-lg px-3.5 py-2 text-xs font-bold transition ${
+                  requestSegment === 'blocked'
+                    ? 'bg-white text-rose-600 shadow-sm dark:bg-slate-900 dark:text-rose-400'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                }`}
+              >
+                Blocked ({blockedUsers.length})
               </button>
             </div>
           </div>
@@ -1155,6 +1447,69 @@ export function StudyBuddyPage() {
                   )}
                 </div>
               )}
+
+              {/* BLOCKED STUDENTS SECTION */}
+              {requestSegment === 'blocked' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                      Blocked Students ({blockedUsers.length})
+                    </h3>
+                  </div>
+
+                  {blockedUsers.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 py-10 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/40">
+                      You have not blocked any students.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {blockedUsers.map((student) => {
+                        const isUnblocking = actioningUserIds.has(student.id);
+                        return (
+                          <div
+                            key={student.id}
+                            className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                          >
+                            <div className="flex min-w-0 items-center gap-3">
+                              {student.avatarUrl ? (
+                                <img
+                                  src={student.avatarUrl}
+                                  alt={student.name}
+                                  className="h-11 w-11 shrink-0 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-50 font-bold text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
+                                  {student.name.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <h4 className="truncate font-bold text-slate-900 dark:text-slate-50">
+                                  {student.name}
+                                </h4>
+                                <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                                  <School size={12} className="shrink-0" />
+                                  <span className="truncate">
+                                    {student.school || 'Coursemate'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={isUnblocking}
+                              onClick={() => handleUnblockUser(student)}
+                              className="shrink-0 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-900/50 dark:bg-indigo-950/40 dark:text-indigo-300"
+                            >
+                              {isUnblocking ? 'Unblocking...' : 'Unblock'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1308,19 +1663,32 @@ export function StudyBuddyPage() {
                     </button>
                   </div>
 
-                  <div className="relative">
+                  <div ref={menuRef} className="relative">
                     <button
-                      onClick={() => setMenuOpen(!menuOpen)}
+                      type="button"
+                      aria-label="Conversation actions"
+                      aria-expanded={menuOpen}
+                      aria-haspopup="menu"
+                      onClick={() => setMenuOpen((open) => !open)}
                       className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
                     >
                       <MoreVertical size={18} />
                     </button>
 
                     {menuOpen && (
-                      <div className="absolute right-0 top-10 z-20 w-48 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+                      <div
+                        role="menu"
+                        className="absolute right-0 top-10 z-20 w-48 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+                      >
                         <button
+                          type="button"
+                          role="menuitem"
                           onClick={() => {
                             setMenuOpen(false);
+                            setReportTarget(activeConversation.otherUser);
+                            setReportReason('');
+                            setReportError(null);
+                            setAlsoBlockOnReport(false);
                             setReportModalOpen(true);
                           }}
                           className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -1329,9 +1697,12 @@ export function StudyBuddyPage() {
                           <span>Report user</span>
                         </button>
                         <button
+                          type="button"
+                          role="menuitem"
                           onClick={() => {
                             setMenuOpen(false);
-                            handleBlockUser();
+                            setConfirmActionError(null);
+                            setBlockConfirmTarget(activeConversation.otherUser);
                           }}
                           className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                         >
@@ -1339,9 +1710,12 @@ export function StudyBuddyPage() {
                           <span>Block user</span>
                         </button>
                         <button
+                          type="button"
+                          role="menuitem"
                           onClick={() => {
                             setMenuOpen(false);
-                            handleUnfriendUser();
+                            setConfirmActionError(null);
+                            setUnfriendConfirmTarget(activeConversation.otherUser);
                           }}
                           className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
                         >
@@ -1399,6 +1773,8 @@ export function StudyBuddyPage() {
                                     <RotateCcw size={10} />
                                     <span>Retry</span>
                                   </button>
+                                ) : m.status === 'sending' ? (
+                                  <Clock size={12} aria-label="Sending" />
                                 ) : m.readAt ? (
                                   <CheckCheck size={13} className="text-cyan-200" />
                                 ) : (
@@ -1557,7 +1933,7 @@ export function StudyBuddyPage() {
           ────────────────────────────────────────────── */}
       {settingsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
               <h3 className="font-bold text-slate-900 dark:text-slate-50 text-lg">
                 Study Buddy Settings
@@ -1636,6 +2012,49 @@ export function StudyBuddyPage() {
                 </button>
               </div>
             </form>
+
+            {/* Blocked Students Management */}
+            <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
+              <div className="mb-2.5 flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Blocked Students ({blockedUsers.length})
+                </h4>
+              </div>
+              {blockedUsers.length === 0 ? (
+                <p className="rounded-xl bg-slate-50 px-3.5 py-3 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                  No blocked students right now.
+                </p>
+              ) : (
+                <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
+                  {blockedUsers.map((student) => {
+                    const isUnblocking = actioningUserIds.has(student.id);
+                    return (
+                      <div
+                        key={student.id}
+                        className="flex items-center justify-between gap-2.5 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-slate-800 dark:bg-slate-800/50"
+                      >
+                        <div className="min-w-0">
+                          <b className="block truncate text-xs text-slate-900 dark:text-slate-100">
+                            {student.name}
+                          </b>
+                          <span className="block truncate text-[11px] text-slate-500 dark:text-slate-400">
+                            {student.school || 'Coursemate'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isUnblocking}
+                          onClick={() => handleUnblockUser(student)}
+                          className="shrink-0 rounded-lg border border-indigo-200 bg-white px-2.5 py-1 text-[11px] font-bold text-indigo-700 transition hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-900/50 dark:bg-slate-900 dark:text-indigo-300"
+                        >
+                          {isUnblocking ? 'Unblocking...' : 'Unblock'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1644,42 +2063,272 @@ export function StudyBuddyPage() {
           REPORT MODAL
           ────────────────────────────────────────────── */}
       {reportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900">
-            <h3 className="font-bold text-slate-900 dark:text-slate-50 text-lg">
-              Report Safety Issue
-            </h3>
-            <p className="mt-1 text-xs text-slate-500">
-              Help us maintain an academic, respectful community. Please describe the violation:
-            </p>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => {
+            if (!submittingReport) setReportModalOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="report-modal-title"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                  <ShieldAlert size={22} />
+                </div>
+                <div>
+                  <h3 id="report-modal-title" className="font-bold text-slate-900 dark:text-slate-50 text-lg">
+                    Report {reportTarget?.name || activeConversation?.otherUser.name || 'User'}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Help keep Study Buddy academic and respectful.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={submittingReport}
+                onClick={() => setReportModalOpen(false)}
+                aria-label="Close report modal"
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-50 dark:hover:bg-slate-800"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
             <form onSubmit={handleReportSubmit} className="mt-4 space-y-4">
-              <textarea
-                rows={4}
-                required
-                maxLength={1000}
-                placeholder="Describe what occurred (harassment, spam, inappropriate language)..."
-                value={reportReason}
-                onChange={(e) => setReportReason(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
-              />
+              {reportError && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+                >
+                  {reportError}
+                </div>
+              )}
+
+              <div>
+                <span className="mb-2 block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Common reasons
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Spam or commercial links',
+                    'Harassment or abusive language',
+                    'Inappropriate academic conduct',
+                    'Fake profile / impersonation',
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      disabled={submittingReport}
+                      onClick={() => {
+                        setReportReason(preset);
+                        setReportError(null);
+                      }}
+                      className={`rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition ${
+                        reportReason === preset
+                          ? 'border-amber-400 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                          : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="report-reason-textarea"
+                  className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300"
+                >
+                  Details
+                </label>
+                <textarea
+                  id="report-reason-textarea"
+                  rows={4}
+                  required
+                  minLength={3}
+                  maxLength={1000}
+                  disabled={submittingReport}
+                  placeholder="Describe what occurred (at least 3 characters)..."
+                  value={reportReason}
+                  onChange={(e) => {
+                    setReportReason(e.target.value);
+                    if (reportError) setReportError(null);
+                  }}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
+                />
+              </div>
+
+              <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  disabled={submittingReport}
+                  checked={alsoBlockOnReport}
+                  onChange={(e) => setAlsoBlockOnReport(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                />
+                <span>
+                  Also block{' '}
+                  <strong className="font-semibold text-slate-900 dark:text-slate-100">
+                    {reportTarget?.name || activeConversation?.otherUser.name || 'this user'}
+                  </strong>{' '}
+                  and remove chat
+                </span>
+              </label>
 
               <div className="flex gap-2">
                 <button
                   type="button"
+                  disabled={submittingReport}
                   onClick={() => setReportModalOpen(false)}
-                  className="flex-1 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
+                  className="flex-1 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-semibold text-white hover:bg-rose-700"
+                  disabled={submittingReport}
+                  className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
                 >
-                  Submit Report
+                  {submittingReport ? 'Submitting...' : 'Submit Report'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────
+          BLOCK USER CONFIRMATION MODAL
+          ────────────────────────────────────────────── */}
+      {blockConfirmTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => {
+            if (!confirmActionLoading) setBlockConfirmTarget(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="block-confirm-title"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+                <AlertTriangle size={28} />
+              </div>
+
+              <h3 id="block-confirm-title" className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-50">
+                Block {blockConfirmTarget.name}?
+              </h3>
+
+              <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                They will no longer be able to message you, send friend requests, or discover your profile in Study Buddy, and this conversation will be removed.
+              </p>
+            </div>
+
+            {confirmActionError && (
+              <div
+                role="alert"
+                className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+              >
+                {confirmActionError}
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                disabled={confirmActionLoading}
+                onClick={() => setBlockConfirmTarget(null)}
+                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={confirmActionLoading}
+                onClick={handleConfirmBlockUser}
+                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-50"
+              >
+                {confirmActionLoading ? 'Blocking...' : 'Block user'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────
+          UNFRIEND CONFIRMATION MODAL
+          ────────────────────────────────────────────── */}
+      {unfriendConfirmTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => {
+            if (!confirmActionLoading) setUnfriendConfirmTarget(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="unfriend-confirm-title"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                <UserX size={28} />
+              </div>
+
+              <h3 id="unfriend-confirm-title" className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-50">
+                Remove {unfriendConfirmTarget.name}?
+              </h3>
+
+              <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                This will remove{' '}
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {unfriendConfirmTarget.name}
+                </span>{' '}
+                from your study buddies and close this chat. You can always reconnect later in Discover.
+              </p>
+            </div>
+
+            {confirmActionError && (
+              <div
+                role="alert"
+                className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+              >
+                {confirmActionError}
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                disabled={confirmActionLoading}
+                onClick={() => setUnfriendConfirmTarget(null)}
+                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                Keep Buddy
+              </button>
+              <button
+                type="button"
+                disabled={confirmActionLoading}
+                onClick={handleConfirmUnfriendUser}
+                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-50"
+              >
+                {confirmActionLoading ? 'Removing...' : 'Unfriend'}
+              </button>
+            </div>
           </div>
         </div>
       )}

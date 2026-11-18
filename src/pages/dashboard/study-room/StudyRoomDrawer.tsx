@@ -248,7 +248,7 @@ export function StudyRoomDrawer({
                             <b title={title}>{title}</b>
                             <div className="material-card-meta">
                               <span className="grounded-status">
-                                <CheckCircle2 size={11} className="text-emerald-500 inline mr-1" />
+                                <CheckCircle2 size={11} className="inline mr-1 text-emerald-500" />
                                 Grounded in AI
                               </span>
                               <span className="meta-dot">·</span>
@@ -278,8 +278,8 @@ export function StudyRoomDrawer({
 
               {/* Quick Module Jump Links */}
               <div className="drawer-section">
-                <div className="drawer-section-header">
-                  <span className="drawer-section-title">QUICK MODULE JUMP LINKS</span>
+                <div className="mt-2 drawer-section-header">
+                  <span className=" drawer-section-title">QUICK MODULE JUMP LINKS</span>
                   <span className="drawer-section-hint">Click to ask</span>
                 </div>
 

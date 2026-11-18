@@ -170,6 +170,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const sendMessage = useCallback(
     (toUserId: string, text: string) => {
       return new Promise<{ success: boolean; data?: SocketMessage; error?: string }>((resolve) => {
+        const latestToken = useAuth.getState().accessToken;
+        if (socket && latestToken) {
+          socket.auth = { token: latestToken };
+          if (!socket.connected) {
+            socket.connect();
+          }
+        }
         if (!socket || !socket.connected) {
           resolve({ success: false, error: 'Connection offline. Retrying...' });
           return;
@@ -180,7 +187,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             success: false,
             error: 'Message send timed out. Check your connection and retry.',
           });
-        }, 30_000);
+        }, 12_000);
 
         socket.emit(
           'message:send',

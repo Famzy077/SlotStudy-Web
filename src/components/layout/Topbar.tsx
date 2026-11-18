@@ -12,7 +12,7 @@ interface TopbarProps {
   xp?: string;
   dark: boolean;
   setTheme: (theme: string) => void;
-  hasUnreadNotifications: boolean;
+  unreadNotificationCount: number;
   onOpenMenu: () => void;
   onOpenSearch: () => void;
   topProfileOpen: boolean;
@@ -27,7 +27,7 @@ export function Topbar({
   xp,
   dark,
   setTheme,
-  hasUnreadNotifications,
+  unreadNotificationCount,
   onOpenMenu,
   onOpenSearch,
   topProfileOpen,
@@ -97,13 +97,17 @@ export function Topbar({
           className="icon-button notification-button"
           to="/notifications"
           aria-label={
-            hasUnreadNotifications
-              ? 'Notifications, unread items'
+            unreadNotificationCount > 0
+              ? `Notifications, ${unreadNotificationCount} unread`
               : 'Notifications'
           }
         >
           <Bell size={18} />
-          {hasUnreadNotifications && <span className="notification-dot" />}
+          {unreadNotificationCount > 0 && (
+            <span className="notification-badge">
+              {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+            </span>
+          )}
         </Link>
 
         {/* Mobile & Desktop Profile Avatar with Accessible Dropdown */}
