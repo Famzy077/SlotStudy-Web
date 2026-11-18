@@ -2,29 +2,43 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
+  Bell,
   BookOpen,
   BookOpenCheck,
   Check,
+  CheckCheck,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
+  Clock,
+  Copy,
   Download,
   FileText,
   Flame,
   FolderKanban,
+  Gift,
   GraduationCap,
+  Headphones,
   Laptop,
   Layers,
   Loader2,
   Menu,
+  MessageSquare,
+  Mic,
   Moon,
   RefreshCw,
+  School,
   Send,
   ShieldCheck,
   Smartphone,
+  Sparkles,
   Sun,
   Target,
   Trophy,
   Upload,
+  UserCheck,
+  UserPlus,
+  Users,
   X,
 } from 'lucide-react';
 import HeroScene3D from '../../components/landing/HeroScene3D';
@@ -96,42 +110,84 @@ const SOCIAL_LINKS = [
   { name: 'Telegram', icon: TelegramIcon, href: 'https://t.me/slotstudy', label: 'SlotStudy on Telegram' },
 ];
 
-const FEATURES = [
+interface CapabilityCard {
+  icon: typeof FileText;
+  eyebrow: string;
+  title: string;
+  text: string;
+  tone: string;
+  accentGradient: string;
+  chips: string[];
+  metaLabel: string;
+  metaValue: string;
+}
+
+const CAPABILITY_CARDS: CapabilityCard[] = [
   {
     icon: FileText,
-    title: 'Structured Lecture Briefs',
-    text: 'Condense 60-page slides and dense PDF handouts into executive study briefs, essential formulas, and core exam takeaways in seconds.',
-    tone: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60',
-  },
-  {
-    icon: GraduationCap,
-    title: 'Grounded Study Buddy',
-    text: 'Stuck on a tricky concept at 2 AM? Ask your senior coursemate tutor for intuitive breakdowns, everyday analogies, or Pidgin explanations—100% grounded in your notes.',
-    tone: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200/60 dark:border-purple-800/60',
+    eyebrow: 'Study Briefs',
+    title: 'Handouts to Structured Briefs',
+    text: 'Upload PDFs, lecture slides, or clear PNG/JPG handout photos up to 50 MB. Get structured executive summaries with difficulty levels, reading time estimates, core formulas, and a "Keep These in Mind" checklist.',
+    tone: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200/70 dark:border-blue-800/70',
+    accentGradient: 'from-blue-500/15 via-indigo-500/5 to-transparent',
+    chips: ['PDF · PNG · JPG ≤ 50 MB', '3 min read · Intermediate'],
+    metaLabel: 'One-click next step',
+    metaValue: 'Quiz · Study Room · Copy Notes',
   },
   {
     icon: BookOpenCheck,
-    title: 'Adaptive Practice Quizzes',
-    text: 'Generate high-yield multiple-choice questions directly from your materials with immediate answer rationales and mistake breakdowns.',
-    tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60',
-  },
-  {
-    icon: FolderKanban,
-    title: 'Organized Course Workspaces',
-    text: 'Keep lecture handouts, study briefs, and quizzes neatly categorized by course code instead of buried across folders and group chats.',
-    tone: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60',
-  },
-  {
-    icon: Flame,
-    title: 'Daily Streaks & XP Milestones',
-    text: 'Build a consistent revision routine. Earn XP with every summary read and quiz completed to stay accountable through test week.',
-    tone: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/60',
+    eyebrow: 'Practice & Test Modes',
+    title: 'Dual-Mode Exam Quizzes',
+    text: 'Generate 5, 10, or 15 exam-style questions directly from any Study Brief. Train stress-free in untimed Practice Mode for instant rationales, or switch to Timed Test Mode with a live countdown clock.',
+    tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-800/70',
+    accentGradient: 'from-emerald-500/15 via-teal-500/5 to-transparent',
+    chips: ['Practice Mode', 'Timed Test Mode'],
+    metaLabel: 'Question deck sizes',
+    metaValue: '5 · 10 · 15 MCQs',
   },
   {
     icon: Target,
-    title: 'Exam Readiness Tracking',
-    text: 'Monitor quiz accuracy and subject confidence scores so you know exactly which topics need your attention before walking into the exam hall.',
-    tone: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-200/60 dark:border-cyan-800/60',
+    eyebrow: 'Result Diagnostics',
+    title: 'Mistakes-Only Review & Score Gauge',
+    text: 'Every quiz ends with a percentage grade gauge, time taken, and XP earned. Toggle the Mistakes-Only filter to isolate every missed question alongside your pick, the right answer, and its explanation.',
+    tone: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-200/70 dark:border-cyan-800/70',
+    accentGradient: 'from-cyan-500/15 via-sky-500/5 to-transparent',
+    chips: ['Grade A–C Gauge', 'Mistakes-Only Filter'],
+    metaLabel: 'Review breakdown',
+    metaValue: 'Your pick vs. Correct answer',
+  },
+  {
+    icon: FolderKanban,
+    eyebrow: 'Course & Uni Setup',
+    title: 'Institution-Aware Course Spaces',
+    text: 'Configure your university, degree programme, and year of study (Year 1 to Year 6+) during setup. Every handout, study brief, and quiz stays neatly filed under its exact course code.',
+    tone: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/70 dark:border-amber-800/70',
+    accentGradient: 'from-amber-500/15 via-orange-500/5 to-transparent',
+    chips: ['University + Programme', 'Year 1 – 6+'],
+    metaLabel: 'Per-course tabs',
+    metaValue: 'Materials · Summaries · Quizzes',
+  },
+  {
+    icon: Flame,
+    eyebrow: 'Streaks & Analytics',
+    title: 'Study Hours, XP & Subject Mastery',
+    text: 'Stay consistent through TMA and exam weeks with daily streak tracking, 7-day study-hour bar charts, XP level milestones, and per-subject accuracy percentages showing which courses need focus.',
+    tone: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-200/70 dark:border-orange-800/70',
+    accentGradient: 'from-orange-500/15 via-amber-500/5 to-transparent',
+    chips: ['7-Day Hours Chart', 'Subject Mastery %'],
+    metaLabel: 'Consistency engine',
+    metaValue: 'Daily Streak + XP Levels',
+  },
+  {
+    icon: Bell,
+    eyebrow: 'Live Presence & Sync',
+    title: 'Real-Time Alerts & Referral Invites',
+    text: 'Get instant alerts for incoming Study Buddy friend requests, unread coursemate messages, and study milestones. Share your personal referral code to bring classmates from your department directly into your network.',
+    tone: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-200/70 dark:border-violet-800/70',
+    accentGradient: 'from-violet-500/15 via-indigo-500/5 to-transparent',
+    chips: ['Socket Live Presence', 'Referral Link'],
+    metaLabel: 'Cross-device sync',
+    metaValue: 'Web Workspace ↔ Android APK',
   },
 ];
 
@@ -139,62 +195,66 @@ const STEPS = [
   {
     icon: Upload,
     num: '01',
-    title: 'Upload Course Materials',
-    text: 'Drop lecture slides, PDF handouts, or syllabus notes directly into your course workspace.',
+    title: 'Set Your Course & Upload Notes',
+    text: 'Pick your university, programme, and year of study, then drop PDF handouts, lecture slides, or clear photos (up to 50 MB) into your course workspace.',
   },
   {
     icon: Layers,
     num: '02',
-    title: 'Structured Concept Breakdown',
-    text: 'SlotStudy parses your document to isolate core definitions, key formulas, and high-yield flashpoints—citing exact source pages.',
+    title: 'Read Briefs & Enter the Study Room',
+    text: 'Turn dense handouts into structured Study Briefs, then attach up to 10 notes in your Study Room to ask your Tutor questions with page citations, Pidgin mode, or Read Aloud.',
   },
   {
     icon: Trophy,
     num: '03',
-    title: 'Practice & Master',
-    text: 'Test yourself with adaptive quizzes, resolve doubts with your grounded study buddy, and maintain your streak across devices.',
+    title: 'Quiz Yourself & Link With Coursemates',
+    text: 'Drill timed or untimed MCQs with Mistakes-Only review, track your XP and study hours, and connect with Open University peers via Study Buddy.',
   },
 ];
 
 const FAQS = [
   {
+    q: 'What is the difference between Study Buddy and Study Room?',
+    a: 'Study Buddy is our peer-to-peer student network built to help you discover, add, and chat 1-on-1 in real time with actual students across Open & Distance Learning universities (such as NOUN, Miva Open University, UNILAG DLI, UI DLC, and UNN CDeL). Study Room is your dedicated AI Tutor workspace where you attach up to 10 course PDFs and ask questions strictly grounded in your uploaded handouts.',
+  },
+  {
     q: 'What types of study materials can I upload?',
-    a: 'You can upload lecture slides (PDF), handouts, textbook chapters, past test questions, or raw text notes. SlotStudy automatically parses the text and extracts key concepts, formulas, and structured summaries.',
+    a: 'You can upload PDF lecture slides, handouts, textbook chapters, past questions, or clear PNG and JPG photos of printed notes up to 50 MB. SlotStudy extracts key concepts, difficulty level, estimated reading time, and "Keep These in Mind" exam takeaways.',
+  },
+  {
+    q: 'How does the Study Room Tutor use my course materials?',
+    a: 'When you start a Study Room session, you pick up to 10 materials from your courses. Your Senior Coursemate Tutor answers solely from those notes—showing clickable source citations with file names and page numbers, plus Quick Module Jump Links (MOD 1–4) inside the workspace drawer.',
+  },
+  {
+    q: 'Can the Study Room Tutor speak, listen, or explain in Nigerian Pidgin?',
+    a: 'Yes! Inside the Study Room, you can click prompt chips for Nigerian Pidgin explanations or everyday Naija analogies, dictate questions hands-free with Nigerian English (en-NG) voice input, or click Read Aloud to listen to any explanation.',
+  },
+  {
+    q: 'How do Practice Mode, Test Mode, and Mistakes-Only Review work?',
+    a: 'From any Study Brief, generate 5, 10, or 15 multiple-choice questions. Choose Practice Mode to see answer rationales immediately as you go, or Timed Test Mode for an exam-style countdown. Afterward, toggle "Mistakes to review only" on your results page to study only what you missed.',
+  },
+  {
+    q: 'Which universities are supported in Academic Setup & Study Buddy?',
+    a: 'SlotStudy supports Nigerian Open & Distance Learning and conventional universities including National Open University of Nigeria (NOUN), Miva Open University, University of Lagos (UNILAG DLI), University of Ibadan (UI DLC), University of Nigeria Nsukka (UNN CDeL), and Ahmadu Bello University (ABU), letting you filter peers by institution and shared courses.',
   },
   {
     q: 'How does the Android APK sync with the web version?',
-    a: 'Everything is synchronized in real-time to your SlotStudy cloud account. Any course material you upload on your laptop is instantly accessible on your Android phone, complete with your summaries, quizzes, and streak progress.',
-  },
-  {
-    q: 'Can I test my knowledge with practice quizzes?',
-    a: 'Yes! SlotStudy automatically generates exam-style multiple-choice questions from your summaries. You get immediate explanations for every correct and incorrect option so you learn as you quiz.',
-  },
-  {
-    q: 'How do I install the Android APK on my phone?',
-    a: 'Click "Download Android App" to get the direct .apk file. When prompted on your Android phone, enable installation from your browser or file manager ("Install unknown apps"), and open the app to sign in.',
+    a: 'Everything syncs in real time to your SlotStudy account. Materials uploaded on your laptop, Study Room threads, Study Buddy chats, quizzes, XP, and daily streaks stay updated on your Android phone.',
   },
   {
     q: 'Is SlotStudy free for students to get started?',
-    a: 'Yes, creating an account takes under 30 seconds and gives you free access to course creation, document summaries, practice quizzes, and the Android mobile app.',
-  },
-  {
-    q: 'How accurate are the study briefs for exam revision?',
-    a: 'SlotStudy is strictly grounded in the materials you upload. Rather than pulling generic information from the open web that might contradict your lecturer, it extracts and cites formulas, definitions, and concepts directly from your lecture slides and handouts.',
-  },
-  {
-    q: 'Can the Study Buddy explain concepts in Nigerian Pidgin or everyday analogies?',
-    a: 'Yes! SlotStudy can seamlessly switch between articulate academic English and relatable Nigerian Pidgin with everyday analogies, making tough university concepts click without losing academic rigor.',
+    a: 'Yes, creating an account takes under 30 seconds and gives you free access to course setup, Study Briefs, Study Room sessions, Study Buddy networking, practice quizzes, and the Android mobile app.',
   },
 ];
 
 const MATERIAL_TAGS = [
   'Lecture Slides (PDF)',
+  'Handout Photos (PNG / JPG ≤ 50 MB)',
   'Past Exam Questions',
-  'Textbook Chapters',
-  'Lab Handouts',
-  'Revision Summaries',
-  'Formula Sheets',
-  'Study Guides',
+  'TMA Prep & Study Guides',
+  'Module Jump Links (MOD 1–4)',
+  'Formula & Definition Briefs',
+  'NOUN & Miva Course Codes',
   'Course Syllabi',
 ];
 
@@ -274,114 +334,494 @@ function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
 function SummaryPreview() {
   return (
     <div className="grid gap-6 p-6 sm:p-8 md:grid-cols-2 bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-950">
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600">
-              <FileText size={15} />
-            </span>
-            <span className="font-mono text-[11px]">BIO201_Cell_Respiration.pdf</span>
-          </div>
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold">24 pages</span>
-        </div>
-        <div className="space-y-3">
-          {[92, 100, 78, 96, 64, 88, 100, 70].map((w, i) => (
-            <div
-              key={i}
-              className={`relative h-2.5 overflow-hidden rounded-full ${i === 2 || i === 5 ? 'bg-blue-200 dark:bg-blue-800' : 'bg-slate-100 dark:bg-slate-800'}`}
-              style={{ width: `${w}%` }}
-            >
-              {(i === 2 || i === 5) && <span className="ls-shimmer absolute inset-0" />}
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm flex flex-col justify-between">
+        <div>
+          <div className="mb-4 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600">
+                <FileText size={15} />
+              </span>
+              <span className="font-mono text-[11px] truncate">BIO201_Cell_Respiration.pdf</span>
             </div>
-          ))}
+            <span className="shrink-0 px-2 py-0.5 rounded text-[10px] font-mono bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold">
+              24 pages
+            </span>
+          </div>
+          <div className="space-y-3">
+            {[92, 100, 78, 96, 64, 88, 100, 70].map((w, i) => (
+              <div
+                key={i}
+                className={`relative h-2.5 overflow-hidden rounded-full ${i === 2 || i === 5 ? 'bg-blue-200 dark:bg-blue-800' : 'bg-slate-100 dark:bg-slate-800'}`}
+                style={{ width: `${w}%` }}
+              >
+                {(i === 2 || i === 5) && <span className="ls-shimmer absolute inset-0" />}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="mt-5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 p-3 text-[11px] text-slate-500 dark:text-slate-400 font-mono flex items-center justify-between">
-          <span>Parsing formulas &amp; diagrams…</span>
-          <span className="text-[#10b981] font-bold">100% processed</span>
+        <div className="mt-5 space-y-2.5">
+          <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400">
+            <span className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-semibold">PDF / PNG / JPG</span>
+            <span className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-semibold">Up to 50 MB</span>
+            <span className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-semibold">Course: BIO 201</span>
+          </div>
+          <div className="rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 p-3 text-[11px] text-slate-500 dark:text-slate-400 font-mono flex items-center justify-between">
+            <span>Extracting formulas &amp; key points…</span>
+            <span className="text-[#10b981] font-bold">Ready</span>
+          </div>
         </div>
       </div>
 
       <div className="ls-panel rounded-xl border border-blue-200 dark:border-blue-900/60 bg-white dark:bg-slate-900 p-5 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 text-[10px] font-bold tracking-wide text-[#2563eb] dark:text-blue-400 font-mono">
-            <BookOpenCheck size={12} /> STRUCTURED STUDY BRIEF
+            <BookOpenCheck size={12} /> STUDY BRIEF
           </span>
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200/60 dark:border-emerald-800/60">
               Intermediate
             </span>
-            <span className="text-[11px] font-mono text-slate-400">3 min read</span>
+            <span className="inline-flex items-center gap-1 text-[11px] font-mono text-slate-400">
+              <Clock size={11} /> 3 min read
+            </span>
           </div>
         </div>
         <h4 className="font-[Manrope] text-base font-extrabold text-slate-900 dark:text-white">
           Cellular Respiration: High-Yield Breakdown
         </h4>
-        <ul className="mt-3 space-y-2.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">
+        <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">
           {[
             'Glycolysis converts glucose into 2 pyruvate molecules (+2 net ATP, cytoplasm).',
             'Krebs Cycle oxidizes acetyl-CoA, producing NADH and FADH2 carriers (mitochondria).',
-            'Electron Transport Chain utilizes proton gradient to yield 32-34 ATP with oxygen.',
+            'Electron Transport Chain utilizes proton gradient to yield 32–34 ATP with oxygen.',
           ].map((item, idx) => (
             <li key={idx} className="flex gap-2 items-start">
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#10b981]" />
+              <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-[#10b981]" />
               <span>{item}</span>
             </li>
           ))}
         </ul>
         <div className="mt-4 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/80 px-3.5 py-2.5 text-[12px] text-amber-900 dark:text-amber-300 flex items-start gap-2">
-          <span className="text-amber-600 dark:text-amber-400 font-bold shrink-0">⚡ Exam Flashpoint:</span>
-          <span>Know the exact ATP yield difference between aerobic vs anaerobic respiration.</span>
+          <span className="text-amber-600 dark:text-amber-400 font-bold shrink-0">Keep in Mind:</span>
+          <span>Compare total aerobic vs. anaerobic ATP yields for short-answer exam questions.</span>
+        </div>
+        <div className="mt-3.5 flex flex-wrap gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] font-bold">
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563eb] text-white px-2.5 py-1">
+            <BookOpenCheck size={12} /> Take a quiz
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1">
+            <GraduationCap size={12} className="text-purple-500" /> Open in Study Room
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1">
+            <Copy size={12} /> Copy notes
+          </span>
         </div>
       </div>
     </div>
   );
 }
 
-function BuddyPreview() {
+const TUTOR_MODES = {
+  standard: {
+    label: 'Grounded Response',
+    citation: 'BIO201_Handout_3.pdf · Page 14',
+    lead: 'Think of the Krebs cycle as an energy extraction refinery rather than the main power generator:',
+    points: [
+      'Its primary role is not direct ATP synthesis — it strips high-energy electrons from acetyl-CoA.',
+      'Those electrons are packed into carrier coenzymes NADH and FADH2 inside the mitochondrial matrix.',
+      'Both carriers feed the Electron Transport Chain, which drives over 90% of your total ATP output.',
+    ],
+  },
+  pidgin: {
+    label: 'Nigerian Pidgin',
+    citation: 'BIO201_Handout_3.pdf · Page 14',
+    lead: 'No worry, make we break am down sharp-sharp! Krebs cycle na like crude oil refinery, no be the NEPA turbine:',
+    points: [
+      'E no dey produce big ATP direct — im main work na to harvest plenty high-energy electrons from glucose.',
+      'E go package those electrons inside special battery packs wey dem call NADH and FADH2.',
+      'Na when NADH and FADH2 reach Electron Transport Chain na im 32–34 ATP go drop at once!',
+    ],
+  },
+  analogy: {
+    label: 'Everyday Naija Analogy',
+    citation: 'BIO201_Handout_3.pdf · Page 14',
+    lead: 'Imagine fetching fuel at a depot (Krebs cycle) versus burning it in your generator (ETC):',
+    points: [
+      'At the depot, you only get 2 small tokens (2 direct ATP), which looks tiny on the surface.',
+      'But you are filling two massive jerrycans — NADH and FADH2 — with high-octane energy.',
+      'Back home, pouring those jerrycans into the Electron Transport Chain powers the entire building.',
+    ],
+  },
+} as const;
+
+function StudyRoomPreview() {
+  const [tutorMode, setTutorMode] = useState<keyof typeof TUTOR_MODES>('standard');
+  const [activeMod, setActiveMod] = useState<'MOD 1' | 'MOD 2'>('MOD 2');
+  const activeCopy = TUTOR_MODES[tutorMode];
+
   return (
-    <div className="space-y-4 bg-slate-50/70 dark:bg-slate-950 p-6 sm:p-8">
-      <div className="ls-panel flex justify-end">
-        <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-[#2563eb] px-4 py-3 text-[13px] text-white shadow-md shadow-blue-500/20 font-medium">
-          I don't understand why the Krebs cycle matters if it only makes 2 ATP directly?
+    <div className="grid md:grid-cols-12 bg-slate-50/70 dark:bg-slate-950">
+      {/* Left Course Sources & Module Jump Drawer */}
+      <div className="md:col-span-4 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="block text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              Course Workspace
+            </span>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="rounded bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 text-[10px] font-mono font-extrabold text-[#2563eb] dark:text-blue-400">
+                BIO 201
+              </span>
+              <b className="text-xs font-[Manrope] text-slate-900 dark:text-white">Cell Respiration</b>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+            2 / 10 PDFs
+          </span>
+        </div>
+
+        <div className="space-y-2">
+          <span className="block text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">
+            Active Course Notes
+          </span>
+          {['BIO201_Handout_3.pdf', 'Metabolism_Past_Qs.pdf'].map((file) => (
+            <div
+              key={file}
+              className="flex items-center gap-2 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-2.5 py-2"
+            >
+              <FileText size={13} className="text-[#2563eb] dark:text-blue-400 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <b className="block truncate text-[11px] text-slate-800 dark:text-slate-200">{file}</b>
+                <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  <CheckCircle2 size={10} /> Grounded in Tutor
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              Quick Module Jump Links
+            </span>
+            <span className="text-[9px] text-slate-400">Click to focus</span>
+          </div>
+          {[
+            { code: 'MOD 1' as const, title: 'Glycolysis & Cytoplasm ATP' },
+            { code: 'MOD 2' as const, title: 'Krebs Cycle & Electron Carriers' },
+          ].map((mod) => (
+            <button
+              key={mod.code}
+              type="button"
+              onClick={() => setActiveMod(mod.code)}
+              className={`w-full flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${
+                activeMod === mod.code
+                  ? 'border-blue-300 dark:border-blue-700 bg-blue-50/70 dark:bg-blue-950/40'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-blue-200'
+              }`}
+            >
+              <span className="rounded bg-[#2563eb] px-1.5 py-0.5 text-[9px] font-mono font-bold text-white shrink-0">
+                {mod.code}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                {mod.title}
+              </span>
+              <ChevronRight size={12} className="text-slate-400 shrink-0" />
+            </button>
+          ))}
         </div>
       </div>
-      <div className="ls-panel flex items-start gap-3">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] text-white shadow-md">
-          <GraduationCap size={16} />
-        </span>
-        <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 text-[13px] leading-relaxed text-slate-700 dark:text-slate-300 shadow-sm">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-900 px-2 py-0.5 text-[10px] font-mono font-bold text-[#2563eb] dark:text-blue-400">
-              <BookOpenCheck size={11} /> Handout 3 · Page 14
-            </span>
-            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-              <CheckCircle2 size={11} /> 100% Grounded
-            </span>
+
+      {/* Right Tutor Chat Area */}
+      <div className="md:col-span-8 p-5 sm:p-6 space-y-4 flex flex-col justify-between">
+        <div className="space-y-3.5">
+          <div className="ls-panel flex justify-end">
+            <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-[#2563eb] px-4 py-2.5 text-[12.5px] text-white shadow-md shadow-blue-500/20 font-medium">
+              Why does {activeMod === 'MOD 1' ? 'Glycolysis' : 'the Krebs cycle'} matter if it only makes 2 ATP directly?
+            </div>
           </div>
-          Great question! Think of the Krebs cycle as an <b>energy extraction refinery</b> rather than the main power generator 💡
-          <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-slate-600 dark:text-slate-400">
-            <li>Its real job isn't making ATP directly — it strips high-energy electrons from fuel molecules.</li>
-            <li>It packs those electrons into carriers called <b>NADH</b> and <b>FADH2</b>.</li>
-            <li>Those carriers feed the Electron Transport Chain, where <b>over 90% of your total ATP</b> is synthesized!</li>
-          </ol>
-          <div className="mt-3 flex flex-wrap gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <span className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300">
-              🇳🇬 Explain in Pidgin
+
+          <div className="ls-panel flex items-start gap-3">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#2563eb] to-[#4f46e5] text-white shadow-md">
+              <GraduationCap size={15} />
             </span>
-            <span className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300">
-              💡 Everyday Analogy
+            <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3.5 text-[12.5px] leading-relaxed text-slate-700 dark:text-slate-300 shadow-sm">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <b className="text-xs font-[Manrope] text-slate-900 dark:text-white">SlotStudy Tutor</b>
+                  <span className="rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200/80 dark:border-purple-800 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:text-purple-300">
+                    Senior Coursemate
+                  </span>
+                </div>
+                <span className="inline-flex items-center gap-1 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-900 px-2 py-0.5 text-[10px] font-mono font-bold text-[#2563eb] dark:text-blue-400">
+                  <BookOpenCheck size={11} /> {activeCopy.citation}
+                </span>
+              </div>
+
+              <p className="font-medium text-slate-800 dark:text-slate-200">{activeCopy.lead}</p>
+              <ol className="mt-2 list-decimal space-y-1 pl-4 text-slate-600 dark:text-slate-400">
+                {activeCopy.points.map((pt, i) => (
+                  <li key={i}>{pt}</li>
+                ))}
+              </ol>
+
+              {/* Interactive Prompt Mode Switcher + Read Aloud */}
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setTutorMode('standard')}
+                    className={`rounded-lg px-2.5 py-1 text-[10.5px] font-semibold transition ${
+                      tutorMode === 'standard'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                    }`}
+                  >
+                    📘 Academic English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTutorMode('pidgin')}
+                    className={`rounded-lg px-2.5 py-1 text-[10.5px] font-semibold transition ${
+                      tutorMode === 'pidgin'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                    }`}
+                  >
+                    🇳🇬 Explain in Pidgin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTutorMode('analogy')}
+                    className={`rounded-lg px-2.5 py-1 text-[10.5px] font-semibold transition ${
+                      tutorMode === 'analogy'
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                    }`}
+                  >
+                    💡 Naija Analogy
+                  </button>
+                </div>
+                <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[10.5px] font-semibold text-slate-600 dark:text-slate-300">
+                  <Headphones size={12} className="text-[#2563eb] dark:text-blue-400" /> Read aloud (en-NG)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-[12px] text-slate-400 shadow-sm">
+          <span className="truncate">Ask your Study Room Tutor about your uploaded PDFs…</span>
+          <div className="ml-auto flex items-center gap-1.5 shrink-0">
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300" title="Voice input (en-NG)">
+              <Mic size={13} />
             </span>
-            <span className="inline-flex items-center rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#2563eb] dark:text-blue-400 px-2.5 py-1 text-[11px] font-bold">
-              🎯 Quiz Me on This
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#2563eb] text-white">
+              <Send size={13} />
             </span>
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2.5 text-[13px] text-slate-400 shadow-sm">
-        <span>Ask your study buddy anything from this handout…</span>
-        <span className="ml-auto grid h-7 w-7 place-items-center rounded-lg bg-[#2563eb] text-white">
-          <Send size={13} />
+    </div>
+  );
+}
+
+const DEMO_BUDDIES = [
+  {
+    id: 'b1',
+    name: 'Tunde Adeyemi',
+    school: 'NOUN',
+    schoolFull: 'National Open University (NOUN)',
+    program: 'B.Sc. Computer Science · Year 3',
+    courses: ['CIT 303', 'GST 204', 'MTH 211'],
+    bio: 'Preparing for CIT 303 & GST 204 e-exams. Happy to swap summaries and quiz together.',
+    online: true,
+    initials: 'TA',
+  },
+  {
+    id: 'b2',
+    name: 'Chidinma Okafor',
+    school: 'Miva',
+    schoolFull: 'Miva Open University',
+    program: 'B.Sc. Software Engineering · Year 2',
+    courses: ['GST 204', 'BIO 201', 'CSC 201'],
+    bio: 'Looking for study accountability buddies for weekend past-question drills.',
+    online: true,
+    initials: 'CO',
+  },
+  {
+    id: 'b3',
+    name: 'Sadiq Bello',
+    school: 'UNILAG DLI',
+    schoolFull: 'University of Lagos (DLI)',
+    program: 'B.Sc. Business Admin · Year 3',
+    courses: ['BUS 301', 'GST 204', 'ECO 202'],
+    bio: 'Working professional revising evenings 8–10 PM WAT. Let’s stay consistent.',
+    online: false,
+    initials: 'SB',
+  },
+];
+
+function StudyBuddyPreview() {
+  const [schoolFilter, setSchoolFilter] = useState<'All' | 'NOUN' | 'Miva' | 'UNILAG DLI'>('All');
+  const [sentRequests, setSentRequests] = useState<Record<string, boolean>>({});
+
+  const visibleStudents = DEMO_BUDDIES.filter(
+    (s) => schoolFilter === 'All' || s.school === schoolFilter,
+  );
+
+  const toggleRequest = (id: string) => {
+    setSentRequests((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  return (
+    <div className="p-5 sm:p-7 bg-slate-50/70 dark:bg-slate-950 space-y-5">
+      {/* Top School Filter & Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {(['All', 'NOUN', 'Miva', 'UNILAG DLI'] as const).map((school) => (
+            <button
+              key={school}
+              type="button"
+              onClick={() => setSchoolFilter(school)}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
+                schoolFilter === school
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+              }`}
+            >
+              <School size={11} />
+              <span>{school === 'All' ? 'All Open Universities' : school}</span>
+            </button>
+          ))}
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/70 dark:border-emerald-800 px-2.5 py-1 text-[10.5px] font-mono font-bold text-emerald-700 dark:text-emerald-400">
+          <Gift size={12} /> Referral Invite Ready
         </span>
+      </div>
+
+      {/* Discovery Cards + Live Peer Chat */}
+      <div className="grid gap-4 lg:grid-cols-12">
+        <div className="lg:col-span-7 space-y-3">
+          {visibleStudents.map((student) => {
+            const isSent = !!sentRequests[student.id];
+            return (
+              <div
+                key={student.id}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative shrink-0">
+                      <div className="grid h-10 w-10 place-items-center rounded-full bg-indigo-100 dark:bg-indigo-950 text-xs font-extrabold text-indigo-700 dark:text-indigo-300">
+                        {student.initials}
+                      </div>
+                      {student.online && (
+                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <b className="truncate text-sm font-[Manrope] text-slate-900 dark:text-white">
+                          {student.name}
+                        </b>
+                        <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300">
+                          {student.school}
+                        </span>
+                      </div>
+                      <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                        {student.program}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleRequest(student.id)}
+                    className={`shrink-0 inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
+                      isSent
+                        ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                    }`}
+                  >
+                    {isSent ? (
+                      <>
+                        <Clock size={12} /> Pending
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus size={12} /> Add Buddy
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{student.bio}</p>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {student.courses.map((code) => (
+                    <span
+                      key={code}
+                      className="inline-flex items-center gap-1 rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-600 dark:text-slate-300"
+                    >
+                      <BookOpen size={10} /> {code}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Live 1-on-1 Peer Chat */}
+        <div className="lg:col-span-5 flex flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative">
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300">
+                  CO
+                </div>
+                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500" />
+              </div>
+              <div className="min-w-0">
+                <b className="block truncate text-xs font-[Manrope] text-slate-900 dark:text-white">
+                  Chidinma Okafor
+                </b>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  Online · Miva Open University
+                </span>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+              <UserCheck size={11} /> Connected
+            </span>
+          </div>
+
+          <div className="my-4 space-y-2.5 text-[12px]">
+            <div className="max-w-[88%] rounded-2xl rounded-tl-sm bg-slate-100 dark:bg-slate-800 px-3.5 py-2 text-slate-700 dark:text-slate-200">
+              Hey! Did you already cover GST 204 Module 3 informal fallacies for this week’s TMA?
+            </div>
+            <div className="ml-auto max-w-[88%] rounded-2xl rounded-br-sm bg-indigo-600 px-3.5 py-2 text-white">
+              Yes! Just ran a 10-question timed quiz from the brief. Want to compare notes at 8 PM?
+              <span className="mt-1 flex items-center justify-end gap-1 text-[9px] text-indigo-100">
+                8:14 PM <CheckCheck size={11} />
+              </span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-[10px] text-slate-500 dark:text-slate-400">
+              <span>Chidinma is typing</span>
+              <span className="inline-flex gap-0.5">
+                <span className="ls-dot h-1 w-1 rounded-full bg-slate-400" />
+                <span className="ls-dot h-1 w-1 rounded-full bg-slate-400" />
+                <span className="ls-dot h-1 w-1 rounded-full bg-slate-400" />
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-[11px] text-slate-400">
+            <span>Message Chidinma…</span>
+            <span className="ml-auto grid h-6 w-6 place-items-center rounded-lg bg-indigo-600 text-white">
+              <Send size={11} />
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -391,16 +831,51 @@ function QuizPreview() {
   const options = ['Nucleus', 'Mitochondria', 'Ribosome', 'Golgi apparatus'];
   const correct = 1;
   const [picked, setPicked] = useState<number | null>(null);
+  const [quizMode, setQuizMode] = useState<'practice' | 'test'>('practice');
   const answered = picked !== null;
 
   return (
     <div className="p-6 sm:p-8 bg-white dark:bg-slate-900">
-      <div className="mb-4 flex items-center justify-between text-xs">
-        <span className="font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          Practice Question 3 of 10 · BIO201
-        </span>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            Question 3 of 10 · BIO201
+          </span>
+          <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 text-[10px] font-bold">
+            <button
+              type="button"
+              onClick={() => setQuizMode('practice')}
+              className={`rounded-md px-2 py-1 transition ${
+                quizMode === 'practice'
+                  ? 'bg-white dark:bg-slate-900 text-[#2563eb] dark:text-blue-400 shadow-xs'
+                  : 'text-slate-500'
+              }`}
+            >
+              Practice Mode
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuizMode('test')}
+              className={`rounded-md px-2 py-1 transition ${
+                quizMode === 'test'
+                  ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs'
+                  : 'text-slate-500'
+              }`}
+            >
+              Timed Test Mode
+            </button>
+          </div>
+        </div>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-3 py-1 font-mono font-bold text-amber-700 dark:text-amber-400">
-          <Flame size={13} className="text-amber-500" /> 3 in a row
+          {quizMode === 'test' ? (
+            <>
+              <Clock size={13} className="text-amber-500" /> 14:42 remaining
+            </>
+          ) : (
+            <>
+              <Flame size={13} className="text-amber-500" /> Instant Feedback
+            </>
+          )}
         </span>
       </div>
       <div className="ls-bar mb-6">
@@ -436,9 +911,12 @@ function QuizPreview() {
       </div>
       {answered ? (
         <div className="ls-panel mt-5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4 text-[13px] leading-relaxed text-slate-700 dark:text-slate-300">
-          <b className={picked === correct ? 'text-[#10b981]' : 'text-red-600'}>
-            {picked === correct ? '✓ Correct! +50 XP added' : '✗ Incorrect.'}
-          </b>{' '}
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+            <b className={picked === correct ? 'text-[#10b981]' : 'text-red-600'}>
+              {picked === correct ? '✓ Correct! +50 XP added' : '✗ Flagged for Mistakes-Only Review'}
+            </b>
+            <span className="text-[10px] font-mono text-slate-400">5 · 10 · 15 question decks</span>
+          </div>
           The <b>mitochondria</b> host both the citric acid (Krebs) cycle within the matrix and the electron transport chain along the inner cristae membrane.
           <div className="mt-3">
             <button
@@ -452,7 +930,7 @@ function QuizPreview() {
         </div>
       ) : (
         <p className="mt-4 text-xs font-mono text-slate-400">
-          👆 Click an option above to test real instant feedback.
+          👆 Pick an option or switch between Practice Mode &amp; Timed Test Mode above.
         </p>
       )}
     </div>
@@ -462,9 +940,9 @@ function QuizPreview() {
 function ProgressPreview() {
   const days = [40, 65, 30, 85, 60, 95, 75];
   const courses = [
-    { name: 'Biology 201: Cell Biology', pct: 82, color: '#2563eb' },
-    { name: 'Organic Chemistry II', pct: 64, color: '#10b981' },
-    { name: 'Applied Biostatistics', pct: 45, color: '#f59e0b' },
+    { name: 'BIO 201: Cell Biology', pct: 82, color: '#2563eb' },
+    { name: 'GST 204: Philosophy & Logic', pct: 74, color: '#10b981' },
+    { name: 'CHM 202: Organic Chemistry II', pct: 48, color: '#f59e0b' },
   ];
 
   return (
@@ -482,7 +960,10 @@ function ProgressPreview() {
         </div>
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-slate-50/60 dark:bg-slate-950">
-          <div className="mb-3 text-xs font-bold text-slate-500 dark:text-slate-400 font-mono uppercase">Activity This Week</div>
+          <div className="mb-3 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 font-mono uppercase">
+            <span>Weekly Study Hours</span>
+            <span className="text-[#2563eb] dark:text-blue-400">11.4 hrs</span>
+          </div>
           <div className="flex h-20 items-end gap-2">
             {days.map((h, i) => (
               <div key={i} className="flex flex-1 flex-col items-center gap-1">
@@ -498,10 +979,10 @@ function ProgressPreview() {
       </div>
 
       <div className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-800 p-5 md:col-span-3 bg-white dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <span className="text-sm font-extrabold text-slate-900 dark:text-white font-[Manrope]">Subject Mastery & Revision Progress</span>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <span className="text-sm font-extrabold text-slate-900 dark:text-white font-[Manrope]">Subject Mastery &amp; Quiz Accuracy</span>
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded">
-            <Target size={12} /> Midterm in 12 days
+            <Target size={12} /> 78% Overall Accuracy
           </span>
         </div>
         {courses.map((c) => (
@@ -521,9 +1002,10 @@ function ProgressPreview() {
 }
 
 const PREVIEW_TABS = [
-  { id: 'summary', label: 'Study Briefs', icon: FileText, url: 'slotstudyonline.com/summaries', Comp: SummaryPreview },
-  { id: 'buddy', label: 'Study Buddy', icon: GraduationCap, url: 'slotstudyonline.com/study-room', Comp: BuddyPreview },
-  { id: 'quiz', label: 'Practice Quiz', icon: BookOpenCheck, url: 'slotstudyonline.com/quizzes', Comp: QuizPreview },
+  { id: 'summary', label: 'Study Briefs', icon: FileText, url: 'slotstudyonline.com/ai', Comp: SummaryPreview },
+  { id: 'room', label: 'Study Room & Tutor', icon: GraduationCap, url: 'slotstudyonline.com/study-room', Comp: StudyRoomPreview },
+  { id: 'buddy', label: 'Study Buddy Network', icon: Users, url: 'slotstudyonline.com/study-buddy', Comp: StudyBuddyPreview },
+  { id: 'quiz', label: 'Quizzes & Review', icon: BookOpenCheck, url: 'slotstudyonline.com/quizzes', Comp: QuizPreview },
   { id: 'progress', label: 'Progress & Streaks', icon: Trophy, url: 'slotstudyonline.com/progress', Comp: ProgressPreview },
 ] as const;
 
@@ -803,7 +1285,9 @@ export default function LandingPage() {
 
             <Reveal delay={160}>
               <p className="mt-3.5 sm:mt-5 max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-                Turn dense lecture slides, messy PDF handouts, and past questions into structured study summaries, practice quiz arenas, and an adaptive study buddy. Strictly grounded in your course materials, across Web and Android.
+                Turn dense lecture slides, handout photos, and past questions into structured Study Briefs, practice &amp; timed quiz decks, and a{' '}
+                <strong className="font-semibold text-slate-800 dark:text-slate-100">Study Room</strong> with a grounded Senior Coursemate Tutor—plus{' '}
+                <strong className="font-semibold text-slate-800 dark:text-slate-100">Study Buddy</strong> to connect and chat with real coursemates across Open Universities.
               </p>
             </Reveal>
 
@@ -935,10 +1419,10 @@ export default function LandingPage() {
             eyebrow="Interactive Study Environment"
             title={
               <>
-                The SlotStudy <span className="text-[#2563eb] dark:text-blue-400">Workspace</span>
+                Inside the SlotStudy <span className="text-[#2563eb] dark:text-blue-400">Workspace</span>
               </>
             }
-            text="Explore the live simulations below to see how SlotStudy accelerates reading, comprehension, and verified exam revision."
+            text="Switch through all five core spaces below—Study Briefs, Study Room with your Tutor, Study Buddy peer network, Dual-Mode Quizzes, and Progress Analytics."
           />
 
           <Reveal>
@@ -965,7 +1449,7 @@ export default function LandingPage() {
 
             {/* Simulation Preview inside clean browser mockup */}
             <BrowserFrame url={active.url}>
-              <div key={active.id} role="tabpanel" className="min-h-[350px]">
+              <div key={active.id} role="tabpanel" className="min-h-[380px]">
                 <ActivePreview />
               </div>
             </BrowserFrame>
@@ -974,30 +1458,273 @@ export default function LandingPage() {
       </section>
 
       {/* =========================================================================
-          5. FEATURES GRID ("EVERYTHING STUDENTS NEED")
+          5. FEATURES BENTO & CAPABILITY SHOWCASE
           ========================================================================= */}
       <section id="features" className="scroll-mt-20 py-20 sm:py-28 bg-white dark:bg-[#0b0f19] border-y border-slate-200/80 dark:border-slate-800">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
-            eyebrow="Purpose-Built Academic Tools"
+            eyebrow="Complete Academic Toolkit"
             title={
               <>
-                Built for How University Students <span className="text-[#2563eb] dark:text-blue-400">Actually Study</span>
+                Built for Real Courses, Real Exams &amp; <span className="text-[#2563eb] dark:text-blue-400">Real Coursemates</span>
               </>
             }
-            text="No distractions, no hallucinated internet trivia. Just the structured study tools you need to stay on top of your semester."
+            text="Every feature inside SlotStudy solves a specific semester bottleneck—from finding Open University peers in Study Buddy to drilling cited course notes in the Study Room."
           />
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((feat, i) => (
-              <Reveal key={feat.title} delay={(i % 3) * 90}>
-                <article className="ls-card-hover h-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 p-6 flex flex-col justify-between">
-                  <div>
-                    <span className={`ls-icon-wiggle mb-5 grid h-12 w-12 place-items-center rounded-xl ${feat.tone}`}>
-                      <feat.icon size={22} />
+          {/* Tier 1: Flagship Interactive Bento Cards */}
+          <div className="grid gap-6 lg:grid-cols-12 mb-6">
+            {/* Flagship Card A: Study Buddy (Open University Peer Network) */}
+            <Reveal className="lg:col-span-7 min-w-0">
+              <article className="ls-card-hover relative h-full overflow-hidden rounded-3xl border border-indigo-200/80 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-50/70 via-white to-blue-50/40 dark:from-indigo-950/30 dark:via-slate-900 dark:to-slate-950 p-6 sm:p-8 flex flex-col justify-between shadow-lg shadow-indigo-500/5">
+                <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl" />
+
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100/80 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                      <Users size={12} /> Study Buddy • Peer Network
                     </span>
-                    <h3 className="font-[Manrope] text-lg font-extrabold text-slate-900 dark:text-white">{feat.title}</h3>
-                    <p className="mt-2.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{feat.text}</p>
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Real-Time Student Chat
+                    </span>
+                  </div>
+
+                  <h3 className="mt-4 font-[Manrope] text-2xl sm:text-[26px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-snug">
+                    Connect With Open University Coursemates — Never Study Solo
+                  </h3>
+                  <p className="mt-2.5 text-sm leading-relaxed text-slate-600 dark:text-slate-300 max-w-2xl">
+                    Distance learning shouldn&apos;t mean studying in isolation. Discover verified students across Open &amp; Distance Learning universities taking your exact course codes, send friend requests, chat 1-on-1 with read receipts &amp; typing indicators, or share referral invites.
+                  </p>
+
+                  {/* Institution Support Strip */}
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {['NOUN', 'Miva Open University', 'UNILAG DLI', 'UI DLC', 'UNN CDeL', 'ABU'].map((uni) => (
+                      <span
+                        key={uni}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200/90 dark:border-slate-700/80 bg-white/90 dark:bg-slate-800/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-200 shadow-2xs"
+                      >
+                        <School size={11} className="text-indigo-500" />
+                        {uni}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Embedded High-Craft Peer Discovery + Live Chat UI */}
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {/* Mini Student Profile Cards */}
+                  <div className="space-y-2.5">
+                    {[
+                      {
+                        initials: 'TA',
+                        name: 'Tunde A.',
+                        meta: 'NOUN · B.Sc. Info Tech · 300L',
+                        codes: ['CIT 303', 'GST 204'],
+                        status: 'Connected',
+                        statusTone: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+                      },
+                      {
+                        initials: 'CO',
+                        name: 'Chidinma O.',
+                        meta: 'Miva Open Uni · Software Eng · 200L',
+                        codes: ['GST 204', 'CSC 201'],
+                        status: '+ Add Buddy',
+                        statusTone: 'bg-indigo-600 text-white border-indigo-600',
+                      },
+                    ].map((peer) => (
+                      <div
+                        key={peer.name}
+                        className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/95 p-3 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="relative shrink-0">
+                              <span className="grid h-8 w-8 place-items-center rounded-full bg-indigo-100 dark:bg-indigo-950 text-[11px] font-extrabold text-indigo-700 dark:text-indigo-300">
+                                {peer.initials}
+                              </span>
+                              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500" />
+                            </div>
+                            <div className="min-w-0">
+                              <b className="block truncate text-xs font-[Manrope] text-slate-900 dark:text-white">{peer.name}</b>
+                              <span className="block truncate text-[10px] text-slate-500 dark:text-slate-400">{peer.meta}</span>
+                            </div>
+                          </div>
+                          <span className={`shrink-0 rounded-lg border px-2 py-1 text-[10px] font-bold ${peer.statusTone}`}>
+                            {peer.status}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {peer.codes.map((c) => (
+                            <span key={c} className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[9.5px] font-mono font-semibold text-slate-600 dark:text-slate-300">
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Mini Live 1-on-1 Peer Chat Preview */}
+                  <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/95 p-3.5 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-100">
+                        <MessageSquare size={12} className="text-indigo-500" /> 1-on-1 Buddy Chat
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 text-[9px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        <Gift size={10} /> Invite Classmates
+                      </span>
+                    </div>
+                    <div className="my-2.5 space-y-2 text-[11px]">
+                      <div className="rounded-xl rounded-tl-sm bg-slate-100 dark:bg-slate-800 px-3 py-2 text-slate-700 dark:text-slate-200">
+                        Finished the GST 204 Module 3 brief — want to compare TMA notes?
+                      </div>
+                      <div className="ml-auto max-w-[90%] rounded-xl rounded-br-sm bg-indigo-600 px-3 py-2 text-white">
+                        Yes! Let&apos;s drill the 10-question quiz at 8 PM.
+                        <span className="mt-0.5 flex items-center justify-end gap-1 text-[9px] text-indigo-100">
+                          Read <CheckCheck size={10} />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <span>Filter by school · course · online</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">Report / Block safe</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </Reveal>
+
+            {/* Flagship Card B: Study Room (Grounded Tutor) */}
+            <Reveal delay={90} className="lg:col-span-5 min-w-0">
+              <article className="ls-card-hover relative h-full overflow-hidden rounded-3xl border border-blue-200/80 dark:border-blue-900/60 bg-gradient-to-br from-blue-50/70 via-white to-emerald-50/40 dark:from-blue-950/30 dark:via-slate-900 dark:to-slate-950 p-6 sm:p-8 flex flex-col justify-between shadow-lg shadow-blue-500/5">
+                <div className="pointer-events-none absolute -left-16 -bottom-16 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl" />
+
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100/80 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-[#2563eb] dark:text-blue-300">
+                      <GraduationCap size={12} /> Study Room • Grounded Tutor
+                    </span>
+                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300">
+                      Up to 10 PDFs / session
+                    </span>
+                  </div>
+
+                  <h3 className="mt-4 font-[Manrope] text-2xl sm:text-[26px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-snug">
+                    Study Room With Your Senior Coursemate Tutor
+                  </h3>
+                  <p className="mt-2.5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                    Attach up to 10 handouts and jump straight to topics via Quick Module Links (<span className="font-mono text-xs font-semibold">MOD 1–4</span>). Get page-cited explanations strictly from your slides—in Academic English, Nigerian Pidgin, or Naija analogies, with Voice Dictation and Read Aloud.
+                  </p>
+                </div>
+
+                {/* Embedded Tutor Response & Audio/Pidgin Controls */}
+                <div className="mt-6 space-y-3">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-[10px] font-mono font-bold text-slate-700 dark:text-slate-200 shadow-2xs">
+                      <span className="rounded bg-[#2563eb] px-1 py-0.2 text-[9px] text-white">MOD 2</span>
+                      Logic &amp; Validity
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 px-2.5 py-1 text-[10px] font-mono font-bold text-[#2563eb] dark:text-blue-400">
+                      <BookOpenCheck size={11} /> Handout 2 · Page 19
+                    </span>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/95 p-4 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-[#2563eb] to-[#4f46e5] text-white">
+                          <Sparkles size={13} />
+                        </span>
+                        <div>
+                          <b className="block text-xs font-[Manrope] text-slate-900 dark:text-white">SlotStudy Tutor</b>
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">100% Cited From Your PDFs</span>
+                        </div>
+                      </div>
+                      <span className="rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200/80 dark:border-purple-800 px-2 py-0.5 text-[9.5px] font-bold text-purple-700 dark:text-purple-300">
+                        Senior Coursemate
+                      </span>
+                    </div>
+
+                    <p className="text-[12px] leading-relaxed text-slate-600 dark:text-slate-300">
+                      &ldquo;Validity checks if the conclusion strictly follows the premises—even before checking real-world truth. See <b className="text-slate-800 dark:text-white">GST204_Mod2.pdf (p. 19)</b>.&rdquo;
+                    </p>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/70 dark:border-emerald-800 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                        🇳🇬 Explain in Pidgin
+                      </span>
+                      <span className="rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-200/70 dark:border-amber-800 px-2 py-1 text-[10px] font-semibold text-amber-800 dark:text-amber-300">
+                        💡 Naija Analogy
+                      </span>
+                    </div>
+
+                    {/* Voice Dictation & Read Aloud Bar */}
+                    <div className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 px-3 py-2">
+                      <div className="flex items-center gap-2 text-[10.5px] font-semibold text-slate-700 dark:text-slate-200">
+                        <Headphones size={13} className="text-[#2563eb] dark:text-blue-400" />
+                        <span>Read Aloud</span>
+                        <span className="flex items-end gap-0.5 h-3" aria-hidden="true">
+                          {[45, 85, 60, 100, 50, 75].map((h, idx) => (
+                            <span
+                              key={idx}
+                              className="w-0.5 rounded-full bg-[#2563eb] dark:bg-blue-400"
+                              style={{ height: `${h}%` }}
+                            />
+                          ))}
+                        </span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-600 dark:text-slate-300">
+                        <Mic size={11} className="text-rose-500" /> en-NG Voice Input
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </Reveal>
+          </div>
+
+          {/* Tier 2: 6 Detailed Capability Cards with Micro-UI Spec Strips */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {CAPABILITY_CARDS.map((card, i) => (
+              <Reveal key={card.title} delay={(i % 3) * 80}>
+                <article className="ls-card-hover group relative h-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 p-6 flex flex-col justify-between">
+                  <div className={`pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b ${card.accentGradient} opacity-80`} />
+
+                  <div className="relative">
+                    <div className="mb-4 flex items-center justify-between gap-2">
+                      <span className={`ls-icon-wiggle grid h-11 w-11 place-items-center rounded-xl ${card.tone}`}>
+                        <card.icon size={20} />
+                      </span>
+                      <span className="rounded-full border border-slate-200/80 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-300">
+                        {card.eyebrow}
+                      </span>
+                    </div>
+
+                    <h3 className="font-[Manrope] text-lg font-extrabold text-slate-900 dark:text-white">
+                      {card.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                      {card.text}
+                    </p>
+                  </div>
+
+                  {/* Embedded Micro-UI Spec Footer */}
+                  <div className="relative mt-5 pt-4 border-t border-slate-200/80 dark:border-slate-800 space-y-2.5">
+                    <div className="flex flex-wrap gap-1.5">
+                      {card.chips.map((chip) => (
+                        <span
+                          key={chip}
+                          className="rounded-md bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 px-2 py-0.5 text-[10.5px] font-mono font-semibold text-slate-700 dark:text-slate-200"
+                        >
+                          {chip}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] font-mono">
+                      <span className="text-slate-400 dark:text-slate-500">{card.metaLabel}</span>
+                      <b className="text-slate-800 dark:text-slate-200">{card.metaValue}</b>
+                    </div>
                   </div>
                 </article>
               </Reveal>
@@ -1062,15 +1789,15 @@ export default function LandingPage() {
               Study at Your Desk or On the Go
             </h2>
             <p className="mt-3.5 max-w-lg text-base leading-relaxed text-slate-600 dark:text-slate-300">
-              Upload dense lecture slides on your laptop at the library, then review flash summaries and practice quizzes on your phone while commuting. Your streak and progress stay synchronized with zero latency.
+              Upload dense lecture slides on your laptop at the library, then review Study Briefs, drill practice quizzes, ask your Study Room Tutor, or message Open University peers in Study Buddy right from your Android phone.
             </p>
 
             <ul className="mt-6 space-y-3 text-sm font-medium text-slate-700 dark:text-slate-300">
               {[
-                'Single account synchronizes across all devices',
-                '14-day streak, XP, and quiz scores never reset',
-                'Direct Android APK download — no app store account needed',
-                'Lightweight 28 MB package with instant offline access',
+                'Single account syncs courses, briefs, and Study Room threads',
+                '14-day streak, XP levels, and quiz history stay updated',
+                'Real-time Study Buddy chats & friend-request alerts on mobile',
+                'Direct 28 MB Android APK — no app store account needed',
               ].map((item, idx) => (
                 <li key={idx} className="flex items-center gap-2.5">
                   <span className="grid h-6 w-6 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 shrink-0">
@@ -1140,12 +1867,12 @@ export default function LandingPage() {
                   <BookOpen size={12} className="text-[#2563eb]" />
                   <b className="text-[11px] font-[Manrope] text-slate-900 dark:text-white">Today's Study Plan</b>
                 </div>
-                {['Read BIO201 brief', 'Practice Quiz', 'Ask Study Buddy'].map((task, i) => (
+                {['Read BIO201 brief', 'Study Room Tutor Q&A', 'Chat NOUN Study Buddy'].map((task, i) => (
                   <div key={task} className="flex items-center gap-1.5 rounded-lg bg-white dark:bg-slate-900 p-2 text-[10px] font-semibold text-slate-700 dark:text-slate-300 shadow-sm">
-                    <span className={`grid h-4 w-4 place-items-center rounded-full ${i < 2 ? 'bg-[#10b981] text-white' : 'border border-slate-300 dark:border-slate-700'}`}>
+                    <span className={`grid h-4 w-4 shrink-0 place-items-center rounded-full ${i < 2 ? 'bg-[#10b981] text-white' : 'border border-slate-300 dark:border-slate-700'}`}>
                       {i < 2 && <Check size={9} />}
                     </span>
-                    <span>{task}</span>
+                    <span className="truncate">{task}</span>
                   </div>
                 ))}
               </div>
@@ -1157,7 +1884,7 @@ export default function LandingPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-              <span>Cloud Sync • 0ms Latency</span>
+              <span>Cloud Sync • Web &amp; Android</span>
             </div>
           </Reveal>
         </div>
@@ -1342,7 +2069,7 @@ export default function LandingPage() {
             <div className="md:col-span-2 space-y-4">
               <SlotStudyBrandLogo size="md" />
               <p className="max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                Your personal academic workspace — structured lecture briefs, adaptive practice quizzes, and a grounded study buddy for every university course.
+                Your complete academic workspace — structured Study Briefs, dual-mode practice quizzes, a cited Study Room Tutor, and Study Buddy peer connections across Open Universities.
               </p>
 
               {/* Social Media Icons (LinkedIn, X, Instagram, TikTok, Telegram) */}

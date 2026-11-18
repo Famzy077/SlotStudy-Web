@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft, ArrowRight, Check, ChevronRight, FileText, GraduationCap, Headphones,
-  MessageCircle, Mic, Plus, Send, Upload, X,
+  ArrowRight, Check, ChevronRight, FileText, GraduationCap, Headphones,
+  MessageCircle, Mic, PanelLeftOpen, Send, Upload, X,
 } from 'lucide-react';
 import api, { getErrorMessage, unwrap } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
@@ -11,6 +11,9 @@ import type { Course, DataObject, Material, StudyMessage } from '../../../types'
 import { getPath, list, useApiQuery } from '../../../hooks/useApiQuery';
 import { EmptyState, LoadingLine, Modal, PageTitle, QueryNotice } from '../../../components/common';
 import { MarkdownContent } from '../../../components/common/MarkdownContent';
+import { cleanAndFormatCitations } from '../../../lib/citations';
+import { UserMessageBubble } from './UserMessageBubble';
+import { StudyRoomDrawer } from './StudyRoomDrawer';
 
 interface RecognitionEvent extends Event {
   results: ArrayLike<ArrayLike<{ transcript: string }>>;
@@ -57,6 +60,7 @@ export function StudyRoomPage() {
   const [sources, setSources] = useState<unknown[]>([]);
   const [showSources, setShowSources] = useState(false);
   const [listening, setListening] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(true);
 
   const session = sessionQuery.data || {};
   const sessionMaterials = list<DataObject>(session.materials);
@@ -70,6 +74,7 @@ export function StudyRoomPage() {
   const streamController = useRef<AbortController | null>(null);
   const recognition = useRef<RecognitionController | null>(null);
   const chatEnd = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     chatEnd.current?.scrollIntoView({ behavior: 'smooth' });
@@ -203,6 +208,11 @@ export function StudyRoomPage() {
     }
   }
 
+  function handleSelectModulePrompt(modulePrompt: string) {
+    setPrompt(modulePrompt);
+    textareaRef.current?.focus();
+  }
+
   function speak(content: string) {
     if (!('speechSynthesis' in window)) {
       setError('Read aloud is not supported in this browser.');
@@ -298,7 +308,7 @@ export function StudyRoomPage() {
               <input
                 value={sessionTitle}
                 onChange={(event) => setSessionTitle(event.target.value)}
-                placeholder="e.g. Reviewing cell biology"
+                placeholder="e.g. Reviewing GST 204 Philosophy & Logic"
                 maxLength={120}
               />
             </label>
@@ -407,64 +417,71 @@ export function StudyRoomPage() {
 
   const history = list<StudyMessage>(session.messages);
   const visibleMessages = [...history, ...optimisticMessages];
+  const userName = useAuth.getState().user?.name || 'You';
 
   return (
-    <div className="chat-page">
-      <aside className="chat-sidebar">
-        <div className="chat-sidebar-heading">
-          <Link to="/study-room" className="back-link">
-            <ArrowLeft size={14} /> All sessions
-          </Link>
-          <span className="eyebrow">GROUNDED IN YOUR NOTES</span>
-          <h3>{String(session.title || 'Study session')}</h3>
-        </div>
-        <div className="chat-grounded-label">
-          <span className="grounded-dot" /> ACTIVE MATERIALS
-        </div>
-        {sessionMaterials.map((row, index) => {
-          const material = (row.material || row) as DataObject;
-          return (
-            <div className="grounded-material" key={String(material.id || index)}>
-              <FileText size={15} />
-              <span>
-                {String(
-                  material.fileName ||
-                    material.filename ||
-                    material.title ||
-                    'Untitled material',
-                )}
-              </span>
-            </div>
-          );
-        })}
-        <div className="chat-sidebar-tip">
-          <span>✦</span>
-          <b>Need another angle?</b>
-          <p>
-            Ask in English or Nigerian Pidgin. Your buddy is here to help you
-            understand.
-          </p>
-        </div>
-        <Link className="button button-outline new-session-button" to="/study-room">
-          <Plus size={15} /> New session
-        </Link>
-      </aside>
+    <div className={`chat-page ${drawerOpen ? 'chat-page-with-drawer' : 'chat-page-drawer-collapsed'}`}>
+      {/* Course Sources & Chat History Sub-Panel */}
+      <StudyRoomDrawer
+        sessionId={id}
+        sessionTitle={String(session.title || 'Course Study Session')}
+        courseId={String(session.courseId || '')}
+        courses={courses}
+        materials={materials}
+        sessionMaterials={sessionMaterials}
+        sessions={sessions}
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onToggleCollapse={() => setDrawerOpen((prev) => !prev)}
+        onSelectModulePrompt={handleSelectModulePrompt}
+        onOpenSourcesModal={() => setShowSources(true)}
+      />
 
+      {/* Main Chat Feed */}
       <section className="chat-main">
         <header className="chat-topbar">
-          <div>
-            <span className="online-indicator" />
-            <b>Study Room</b>
-            <span className="chat-topbar-divider">·</span>
-            <small>Grounded in your notes</small>
+          <div className="chat-topbar-left">
+            {!drawerOpen && (
+              <button
+                type="button"
+                className="drawer-toggle-btn desktop-only"
+                onClick={() => setDrawerOpen(true)}
+                title="Open Course Sources & Chat History"
+              >
+                <PanelLeftOpen size={16} />
+                <span>Course Sources & Threads</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className="drawer-toggle-btn mobile-only"
+              onClick={() => setDrawerOpen(true)}
+              title="Open Course Sources & Chat History"
+            >
+              <PanelLeftOpen size={16} />
+              <span>Sources</span>
+            </button>
+            <div className="chat-topbar-title-block">
+              <span className="online-indicator" />
+              <b>Study Room</b>
+              <span className="chat-topbar-divider">·</span>
+              <small title={String(session.title || 'Grounded in your notes')}>
+                {session.title ? String(session.title) : 'Grounded in your notes'}
+              </small>
+            </div>
           </div>
-          <button
-            className="icon-button"
-            onClick={() => setShowSources(true)}
-            aria-label="View sources"
-          >
-            <FileText size={17} />
-          </button>
+
+          <div className="chat-topbar-right">
+            <button
+              className="sources-modal-btn"
+              onClick={() => setShowSources(true)}
+              title="View all cited sources & notes"
+              aria-label="View sources"
+            >
+              <FileText size={16} />
+              <span className="sources-modal-btn-label">Citations</span>
+            </button>
+          </div>
         </header>
 
         <div className="chat-messages">
@@ -482,67 +499,89 @@ export function StudyRoomPage() {
                 to understand?
               </h2>
               <p>
-                Your study buddy uses the materials in this session to give you
-                thoughtful, grounded answers.
+                Your AI tutor is grounded in your uploaded course materials. Ask
+                any question, request a Naija analogy, or test yourself!
               </p>
             </div>
           ) : (
-            visibleMessages.map((message, index) => (
-              <div
-                key={message.id || `${message.role}-${index}`}
-                className={`chat-message ${
-                  String(message.role).toLowerCase() === 'user'
-                    ? 'chat-message-user'
-                    : 'chat-message-ai'
-                }`}
-              >
-                <span className="message-avatar">
-                  {String(message.role).toLowerCase() === 'user' ? (
-                    useAuth.getState().user?.name?.slice(0, 1) || 'U'
-                  ) : (
+            visibleMessages.map((message, index) => {
+              const isUser = String(message.role).toLowerCase() === 'user';
+              if (isUser) {
+                return (
+                  <UserMessageBubble
+                    key={message.id || `user-${index}`}
+                    content={String(message.content || '')}
+                    userName={userName}
+                  />
+                );
+              }
+
+              // AI message: parse and format RAG citations cleanly
+              const rawContent = String(message.content || '');
+              const cleanedContent = cleanAndFormatCitations(
+                rawContent,
+                (message.sources as unknown[]) || sources,
+              );
+
+              return (
+                <div
+                  key={message.id || `ai-${index}`}
+                  className="chat-message chat-message-ai"
+                >
+                  <span className="message-avatar">
                     <GraduationCap size={15} />
-                  )}
-                </span>
-                <div className="message-body">
-                  <span className="message-name">
-                    {String(message.role).toLowerCase() === 'user'
-                      ? 'You'
-                      : 'SlotStudy Tutor'}
                   </span>
-                  <div className="markdown-content">
-                    <MarkdownContent>{String(message.content || '')}</MarkdownContent>
+                  <div className="message-body ai-bubble-body">
+                    <div className="ai-message-header">
+                      <span className="message-name">SlotStudy Tutor</span>
+                      <span className="ai-persona-pill">Senior Coursemate</span>
+                    </div>
+                    <div className="markdown-content">
+                      <MarkdownContent onCitationClick={() => setShowSources(true)}>
+                        {cleanedContent}
+                      </MarkdownContent>
+                    </div>
+                    {rawContent && (
+                      <div className="ai-message-footer">
+                        <button
+                          className="read-aloud-button"
+                          onClick={() => speak(rawContent)}
+                        >
+                          <Headphones size={13} /> Read aloud
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  {String(message.role).toLowerCase() !== 'user' && message.content && (
-                    <button
-                      className="read-aloud-button"
-                      onClick={() => speak(String(message.content))}
-                    >
-                      <Headphones size={14} /> Read aloud
-                    </button>
-                  )}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
+
           {busy && streamText && (
             <div className="chat-message chat-message-ai">
               <span className="message-avatar">
                 <GraduationCap size={15} />
               </span>
-              <div className="message-body">
-                <span className="message-name">Study buddy</span>
+              <div className="message-body ai-bubble-body">
+                <div className="ai-message-header">
+                  <span className="message-name">SlotStudy Tutor</span>
+                  <span className="ai-persona-pill">Grounded response</span>
+                </div>
                 <div className="markdown-content">
-                  <MarkdownContent>{streamText}</MarkdownContent>
+                  <MarkdownContent onCitationClick={() => setShowSources(true)}>
+                    {cleanAndFormatCitations(streamText, sources)}
+                  </MarkdownContent>
                   <span className="stream-cursor" />
                 </div>
               </div>
             </div>
           )}
+
           {busy && !streamText && (
             <div className="typing-indicator">
               <span />
               <span />
-              <span /> Thinking through your notes…
+              <span /> Thinking through your course notes…
             </div>
           )}
           {error && <div className="chat-error">{error}</div>}
@@ -554,7 +593,7 @@ export function StudyRoomPage() {
             {[
               [
                 '🇳🇬 Explain in Pidgin',
-                'Abeg break down this concept for me in Nigerian Pidgin!',
+                'Abeg break down this concept for me in Nigerian Pidgin with simple examples!',
               ],
               [
                 '💡 Naija analogy',
@@ -562,11 +601,11 @@ export function StudyRoomPage() {
               ],
               [
                 '🎯 Quiz me',
-                'Test my brain with one quick exam question from this material!',
+                'Test my brain with one quick university exam question from this material!',
               ],
               [
                 '📝 Key takeaways',
-                'What are the top exam takeaways I must remember from this material?',
+                'What are the top 4 exam takeaways I must remember from this material?',
               ],
             ].map(([label, text]) => (
               <button
@@ -587,6 +626,7 @@ export function StudyRoomPage() {
             }}
           >
             <textarea
+              ref={textareaRef}
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
               onKeyDown={(event) => {

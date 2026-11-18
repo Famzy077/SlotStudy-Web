@@ -6,28 +6,68 @@ import {
 import { useAuth } from '../../lib/auth';
 import BrandLogo from '../common/BrandLogo';
 
-export const navigationLinks = [
+export interface NavLinkItem {
+  name: string;
+  to: string;
+  icon: typeof House;
+  badge?: string;
+  subtitle?: string;
+  description?: string;
+}
+
+export interface NavSection {
+  title: string;
+  links: NavLinkItem[];
+}
+
+export const navigationLinks: NavSection[] = [
   {
     title: 'Overview',
     links: [
-      { name: 'Dashboard', to: '/dashboard', icon: House },
-      { name: 'My courses', to: '/courses', icon: BookOpen },
+      { name: 'Dashboard', to: '/dashboard', icon: House, description: 'Overview of your learning progress and daily tasks' },
+      { name: 'My courses', to: '/courses', icon: BookOpen, description: 'Your enrolled courses and study modules' },
     ],
   },
   {
     title: 'Study tools',
     links: [
-      { name: 'Study briefs', to: '/ai', icon: FileText },
-      { name: 'Study buddy', to: '/study-buddy', icon: Users },
-      { name: 'Study room', to: '/study-room', icon: GraduationCap },
-      { name: 'Practice quizzes', to: '/quizzes', icon: BookOpenCheck },
+      {
+        name: 'Study briefs',
+        to: '/ai',
+        icon: FileText,
+        subtitle: 'Instant summaries & takeaways',
+        description: 'Study briefs: Instant course summaries, key exam concepts & cheat-sheets',
+      },
+      {
+        name: 'Study buddy',
+        to: '/study-buddy',
+        icon: Users,
+        badge: 'NEW',
+        subtitle: 'Peer revision & accountability',
+        description: 'Study buddy: Quick conversational revision, coursemate discovery & study accountability',
+      },
+      {
+        name: 'Study room',
+        to: '/study-room',
+        icon: GraduationCap,
+        badge: 'LIVE',
+        subtitle: 'Deep-dive Q&A with your PDFs',
+        description: 'Study room: Deep-dive course Q&A grounded in your uploaded PDFs and lecture notes',
+      },
+      {
+        name: 'Practice quizzes',
+        to: '/quizzes',
+        icon: BookOpenCheck,
+        subtitle: 'Test your exam readiness',
+        description: 'Practice quizzes: Practice exam questions generated from your study materials',
+      },
     ],
   },
   {
     title: 'Your journey',
     links: [
-      { name: 'Progress', to: '/progress', icon: Activity },
-      { name: 'Explore', to: '/help', icon: Compass },
+      { name: 'Progress', to: '/progress', icon: Activity, description: 'Track your XP, study streaks, and quiz milestones' },
+      { name: 'Explore', to: '/help', icon: Compass, description: 'Help guides, FAQs, and tips for studying effectively' },
     ],
   },
 ];
@@ -83,20 +123,29 @@ export function Sidebar({
           {navigationLinks.map((section) => (
             <div className="nav-section" key={section.title}>
               <p>{section.title}</p>
-              {section.links.map(({ name, to, icon: Icon }) => {
+              {section.links.map(({ name, to, icon: Icon, badge, subtitle, description }) => {
                 const active =
                   pathname === to || (to !== '/dashboard' && pathname.startsWith(`${to}/`));
                 return (
                   <Link
                     key={to}
                     to={to}
-                    className={`nav-link ${active ? 'nav-active' : ''}`}
+                    title={description || name}
+                    className={`nav-link ${active ? 'nav-active' : ''} ${
+                      subtitle ? 'nav-link-with-sub' : ''
+                    }`}
                     onClick={onClose}
                   >
                     <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
-                    <span>{name}</span>
-                    {name === 'Study room' && <span className="nav-new">LIVE</span>}
-                    {name === 'Study buddy' && <span className="nav-new">NEW</span>}
+                    <div className="nav-link-content">
+                      <div className="nav-link-title-row">
+                        <span className="nav-link-name">{name}</span>
+                        {badge && <span className="nav-new">{badge}</span>}
+                      </div>
+                      {subtitle && (
+                        <span className="nav-link-subtitle">{subtitle}</span>
+                      )}
+                    </div>
                   </Link>
                 );
               })}
@@ -122,8 +171,12 @@ export function Sidebar({
             onClick={onClose}
           >
             <Bell size={18} />
-            <span>Notifications</span>
-            {hasUnreadNotifications && <span className="notification-dot" />}
+            <div className="nav-link-content">
+              <div className="nav-link-title-row">
+                <span className="nav-link-name">Notifications</span>
+                {hasUnreadNotifications && <span className="notification-dot" />}
+              </div>
+            </div>
           </Link>
 
           <button
